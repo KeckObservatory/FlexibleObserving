@@ -1,0 +1,48 @@
+<html>
+<head>
+<script src='ajax.js'></script>
+<script src='example1.js'></script>
+<style>
+#table1  {
+	border: 1px solid #444; background-color: #ffa; border-collapse: collapse;
+	margin: 0 0 0 0;
+	}
+#table1 td, #table1 th {
+	border: 1px solid #444; background-color: #ffa; padding:5px; margin:0px 0 0 0;
+	margin: 5px 5px 5px 5px;
+	}
+</style>
+</head>
+<body onload='Example1()'>
+<h1>Example 1</h1>
+This is example1.
+
+<table width='600' id='table1'>
+<tr>
+<th width='50%'>Form<th width='50%'>Result
+<tr>
+<td>
+Add these two numbers:<br>
+Paramter A:
+<input type='text' id='paramA' value='1'><br>
+Paramter B:
+<input type='text' id='paramB' value='1'><br>
+<input type='button' value='Calculate' id='calculateBt'>
+<td>
+Result=<span id='result'></span>
+<tr>
+<td>
+Plot something:<br>
+Parameter Length: 
+<input type='text' id='paramL' value='1'><br>
+Parameter Frequency: 
+<input type='text' id='paramF' value='1'><br>
+<input type='button' value='Plot' id='plotBt'>
+<td>
+<img src='test.jpg' id='imgResult'>
+</table>
+
+<hr>
+The footer here.
+</body>
+</html>

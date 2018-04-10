@@ -1,0 +1,63 @@
+table {
+    width: 100%;
+    font-size: 9px;
+    border-collapse: collapse;
+}
+#container {
+    table-layout: fixed;
+    border: 1px solid #444;
+    background-color: #ffa;
+    margin: 0 0 0 0;
+    width: 5in;
+}
+#spec {
+    background-color: lightblue;
+}
+#objRaster {
+    display: none;
+}
+#skyRaster {
+    display: none;
+}
+.outer > td {
+    border: 1px solid #444;
+    background-color: #ffa;
+    width: 25%;
+    padding: 5px;
+    margin: 5px 5px 5px 5px;
+}
+.nopads {
+    padding: 0;
+    margin: 0 0 0 0;
+}
+table.inner {
+    width=100%;
+}
+tr.inner {
+    outline: thin solid black;
+    width=100%;
+}
+tr.inner > td {
+    padding-left: 5px;
+}
+.align-right {
+    text-align: right;
+}
+input[type='text'].short {
+    width: 0.4in;
+    font-size: 9px;
+}
+input[type='text'].medium {
+    width: 1.0in;
+    font-size: 9px;
+}
+input[type='text'].long {
+    width: 1.5in;
+    font-size: 9px;
+}
+select {
+    font-size: 9px;
+}
+input[type='button'] {
+    font-size: 9px;
+}
