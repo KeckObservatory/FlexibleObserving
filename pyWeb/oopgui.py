@@ -253,7 +253,10 @@ class Oopgui:
         self.skyLenX = qstr['skyLenX']
         self.skyHgtY = qstr['skyHgtY']
 
-        self.gridScale = self.rescale()
+        print('inside oopgui update')
+
+        #self.gridScale = self.rescale()
+        self.plt.grid()
 
     def obj_dither_out(self):
         out = ''.join((' type="', self.objPattern, ' '))

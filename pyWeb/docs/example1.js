@@ -32,4 +32,4 @@ function Example1 ()
 
     E('calculateBt').onclick = self.calculate;
     E('plotBt').onclick = self.plot;
-
+}

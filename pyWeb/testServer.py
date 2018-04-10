@@ -58,18 +58,23 @@ class TestAppHandler (EasyHTTPHandler):
         return self.response(buf, 'image/png')
 
     def drawgui(self, req, qstr):
-        print('in the drawgui')
+        print('before  update')
         self.oop.update(qstr)
+        print('after update')
         imgData = io.BytesIO()
+        print('before savefig')
         self.oop.fig.savefig(imgData, format='png')
+        print('after savefig')
         imgData.seek(0)
+        print('before buf read')
         buf = imgData.read()
+        print('before return')
         return self.response(buf, 'image/png')
 
-    def echothis(self):
+    def echothis(self, req, qstr):
         self.oop.echothis()
         res = { 'result':'hello world' }
-        return self.response(res, self.PlainTextType)
+        return self.response(json.dumps(res), self.PlainTextType)
 
 if __name__ == "__main__":
     import signal

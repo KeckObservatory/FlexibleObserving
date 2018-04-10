@@ -229,7 +229,8 @@ function Oopgui(){
 
     self.update = function () {
         function callback(data){
-            El('imgResult').src='data:image/png;base64,' + data;
+            //El('imgResult').src='data:image/png;base64,' + data;
+            El('imgResult').src='myimg.jpg';
         }
         var params = {
             'imgMode':El('imgMode').value,
