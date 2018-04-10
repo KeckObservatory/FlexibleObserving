@@ -1,7 +1,7 @@
 function Oopgui(){
     var self = this;
 
-    function El(id) { return El(id); }
+    function El(id) { return document.getElementById(id); }
 
     self.enableLGS = function () {
         var aomode = El('aoType');
@@ -264,7 +264,7 @@ function Oopgui(){
         };
 
         ajaxCall ('drawgui', params, callback);
-    }
+    };
 
     self.echo = function () {
         function callback (data) {
