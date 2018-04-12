@@ -10,9 +10,9 @@ class Oopgui:
     def __init__(self):
         # Initial planning params
         self.mode = 'spec'
-        self.object = 'none'
-        self.objPattern = 'stare'
-        self.skyPattern = 'none'
+        self.object = 'None'
+        self.objPattern = 'Stare'
+        self.skyPattern = 'None'
         self.measurement = 'arcsec'
         self.aomode = 'NGS'
         self.queueDir = '~/'
@@ -42,7 +42,7 @@ class Oopgui:
         self.objOffY = 1.0
         self.skyOffX = 1.0
         self.skyOffY = 1.0
-        self.offDefs = {'stare':[(0,0)],
+        self.offDefs = {'Stare':[(0,0)],
                 'box4':[(0,0), (1,0), (1,-1), (0,-1)], 
                 'box5':[(0,0),(-1,1),(1,1),(1,-1),(-1,-1)],
                 'box9':[(0,0),(-1,1),(-1,-1),(1,1),(1,-1),
@@ -55,15 +55,18 @@ class Oopgui:
                         'Hn3','Hn4','Hn5','Kn1','Kn2',
                         'Kn3','Kn4','Kn5','Zn3','Drk']
         self.filter = 'Opn'
+        self.draw = { 'None':self.draw_none,
+                'Stare':self.draw_stare,
+                'Box4':self.draw_box4,
+                'Box5':self.draw_box5,
+                'Box9':self.draw_box9,
+                'Statistical Dither':self.draw_stat,
+                'Raster Scan':self.draw_raster,
+                'User Defined':self.draw_user }
 
         # Set up plot graphic
         #%matplotlib inline
-        self.fig = plt.figure(figsize=(8,8))
-        self.ax = self.fig.gca()
-        self.ax.xaxis.set_major_formatter(tkr.FormatStrFormatter('%10.1f"'))
-        self.ax.yaxis.set_major_formatter(tkr.FormatStrFormatter('%10.1f"'))
-        self.ax.set_xticks(np.arange(self.xMin, self.xMax, self.gridScale))
-        self.ax.set_yticks(np.arange(self.yMin, self.yMax, self.gridScale))
+        self.draw_fig()
         self.ax.add_patch(
             #self.add_obj_box(0)
             self.add_obj_diamond()
@@ -118,6 +121,17 @@ class Oopgui:
         elif self.mode in ['imag','both']:
             pass
 
+    def draw_fig(self):
+        self.fig = plt.figure(figsize=(8,8))
+        self.ax = self.fig.gca()
+        self.ax.xaxis.set_major_formatter(tkr.FormatStrFormatter('%10.1f"'))
+        self.ax.yaxis.set_major_formatter(tkr.FormatStrFormatter('%10.1f"'))
+        self.ax.set_xticks(np.arange(self.xMin, self.xMax, self.gridScale))
+        self.ax.set_yticks(np.arange(self.yMin, self.yMax, self.gridScale))
+
+        self.draw[self.objPattern]()
+        self.draw[self.skyPattern]()
+
     def add_obj_box(self, boxNum):
         return pch.Rectangle(
             (self.objX+self.objInitX
@@ -162,10 +176,12 @@ class Oopgui:
             fill = False,               # remove background
             linewidth = 3
         )
+    def draw_none(self):
+        pass
     def draw_stare(self):
-        if self.objPattern == 'stare':
+        if self.objPattern == 'Stare':
             self.ax.add_patch(self.add_obj_box(0))
-        if self.skyPattern == 'stare':
+        if self.skyPattern == 'Stare':
             self.ax.add_patch(self.add_sky_box(0))
     def draw_box4(self):
         if self.mode in ['spec','both']:
@@ -212,11 +228,11 @@ class Oopgui:
             self.ax.add_patch(self.add_obj_diamond(6))
             self.ax.add_patch(self.add_obj_diamond(7))
             self.ax.add_patch(self.add_obj_diamond(8))
-    def draw_statistical_dither(self):
+    def draw_stat(self):
         pass
-    def draw_raster_scan(self):
+    def draw_raster(self):
         pass
-    def draw_user_defined(self, defs):
+    def draw_user(self, defs):
         for frame in defs:
             if self.mode in ['spec','both']:
                 pass
@@ -224,39 +240,40 @@ class Oopgui:
                 pass
 
     def update(self, qstr):
-        qstr = json.loads(qstr)[0]
-        self.mode = qstr['imgMode']
-        self.dataset = qstr['dataset']
-        self.object = qstr['object']
-        self.targType = qstr['targType']
-        self.coordSys = qstr['coordSys']
-        self.aoType = qstr['aoType']
-        self.lgsMode = qstr['lgsMode']
-        self.specFilter = qstr['specFilter']
-        self.scale = qstr['scale']
-        self.specCoadds = qstr['specCoadds']
-        self.specItime = qstr['specItime']
-        self.initOffX = qstr['initOffX']
-        self.initOffY = qstr['initOffY']
-        self.objPattern = qstr['objPattern']
-        self.objFrames = qstr['objFrames']
-        self.objLenX = qstr['objLenX']
-        self.objHgtY = qstr['objHgtY']
-        self.imgFilter = qstr['imgFilter']
-        self.repeats = qstr['repeats']
-        self.imgCoadds = qstr['imgCoadds']
-        self.imgItime = qstr['imgItime']
-        self.nodOffX = qstr['nodOffX']
-        self.nodOffY = qstr['nodOffY']
-        self.skyPattern = qstr['skyPattern']
-        self.skyFrame = qstr['skyFrame']
-        self.skyLenX = qstr['skyLenX']
-        self.skyHgtY = qstr['skyHgtY']
-
-        print('inside oopgui update')
+        try:
+            self.mode = qstr['imgMode'][0]
+            self.dataset = qstr['dataset'][0]
+            self.object = qstr['object'][0]
+            self.targType = qstr['targType'][0]
+            self.coordSys = qstr['coordSys'][0]
+            self.aoType = qstr['aoType'][0]
+            self.lgsMode = qstr['lgsMode'][0]
+            self.specFilter = qstr['specFilter'][0]
+            self.scale = qstr['scale'][0]
+            self.specCoadds = qstr['specCoadds'][0]
+            self.specItime = qstr['specItime'][0]
+            self.initOffX = qstr['initOffX'][0]
+            self.initOffY = qstr['initOffY'][0]
+            self.objPattern = qstr['objPattern'][0]
+            self.objFrames = qstr['objFrames'][0]
+            self.objLenX = qstr['objLenX'][0]
+            self.objHgtY = qstr['objHgtY'][0]
+            self.imgFilter = qstr['imgFilter'][0]
+            self.repeats = qstr['repeats'][0]
+            self.imgCoadds = qstr['imgCoadds'][0]
+            self.imgItime = qstr['imgItime'][0]
+            self.nodOffX = qstr['nodOffX'][0]
+            self.nodOffY = qstr['nodOffY'][0]
+            self.skyPattern = qstr['skyPattern'][0]
+            self.skyFrame = qstr['skyFrames'][0]
+            self.skyLenX = qstr['skyLenX'][0]
+            self.skyHgtY = qstr['skyHgtY'][0]
+        except KeyError:
+            print('Key Error')
 
         #self.gridScale = self.rescale()
-        self.plt.grid()
+        self.draw_fig()
+        print('after plotting grid')
 
     def obj_dither_out(self):
         out = ''.join((' type="', self.objPattern, ' '))

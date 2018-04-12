@@ -58,17 +58,11 @@ class TestAppHandler (EasyHTTPHandler):
         return self.response(buf, 'image/png')
 
     def drawgui(self, req, qstr):
-        print('before  update')
         self.oop.update(qstr)
-        print('after update')
         imgData = io.BytesIO()
-        print('before savefig')
         self.oop.fig.savefig(imgData, format='png')
-        print('after savefig')
         imgData.seek(0)
-        print('before buf read')
         buf = imgData.read()
-        print('before return')
         return self.response(buf, 'image/png')
 
     def echothis(self, req, qstr):
