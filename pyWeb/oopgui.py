@@ -1,4 +1,3 @@
-
 import matplotlib.pyplot as plt
 import matplotlib.patches as pch
 import matplotlib.ticker as tkr
@@ -49,11 +48,13 @@ class Oopgui:
                         (-1,0),(1,0),(0,1),(0,-1)],
                 'dither':{'frames':1, 'length':1.0, 'height':1.0}, 
                 'raster':{'frames':9,'rows':1,'xstep':1.0, 'ystep':1.0}, 
-                'user':[]}
+                'user':[]
+            }
         self.filters = ['Opn','Jbb','Hbb','Kbb','Zbb',
-                        'Jn1','Jn2','Jn3','Hn1','Hn2',
-                        'Hn3','Hn4','Hn5','Kn1','Kn2',
-                        'Kn3','Kn4','Kn5','Zn3','Drk']
+                'Jn1','Jn2','Jn3','Hn1','Hn2',
+                'Hn3','Hn4','Hn5','Kn1','Kn2',
+                'Kn3','Kn4','Kn5','Zn3','Drk'
+            ]
         self.filter = 'Opn'
         self.draw = { 'None':self.draw_none,
                 'Stare':self.draw_stare,
@@ -62,7 +63,8 @@ class Oopgui:
                 'Box9':self.draw_box9,
                 'Statistical Dither':self.draw_stat,
                 'Raster Scan':self.draw_raster,
-                'User Defined':self.draw_user }
+                'User Defined':self.draw_user
+            }
 
         # Set up plot graphic
         #%matplotlib inline
@@ -75,23 +77,10 @@ class Oopgui:
             self.add_sky_box(0)
         )
         # Origin Circle
-        self.ax.add_patch(
-            pch.Circle(
-                (0,0),         # center xy = (x,y) 
-                radius=0.025,
-                fill=False,
-                color='red'
-            )
-        )
+        self.add_origin()
+
         # REF Focus
-        self.ax.add_patch(
-            pch.Rectangle(
-                (-0.015,-0.015),
-                0.03,
-                0.03,
-                fill=False
-            )
-        )
+        self.add_ref()
     # End __init__()
 
     # Methods to set object variables
@@ -129,8 +118,30 @@ class Oopgui:
         self.ax.set_xticks(np.arange(self.xMin, self.xMax, self.gridScale))
         self.ax.set_yticks(np.arange(self.yMin, self.yMax, self.gridScale))
 
+        # Activate the draw function for the correct pattern
+        plt.grid()
         self.draw[self.objPattern]()
         self.draw[self.skyPattern]()
+
+    def add_origin(self):
+        self.ax.add_patch(
+            pch.Circle(
+                (0,0),         # center xy = (x,y) 
+                radius=0.025,
+                fill=False,
+                color='red'
+            )
+        )
+
+    def add_ref(self):
+        self.ax.add_patch(
+            pch.Rectangle(
+                (-0.015,-0.015),
+                0.03,
+                0.03,
+                fill=False
+            )
+        )
 
     def add_obj_box(self, boxNum):
         return pch.Rectangle(
@@ -273,7 +284,6 @@ class Oopgui:
 
         #self.gridScale = self.rescale()
         self.draw_fig()
-        print('after plotting grid')
 
     def obj_dither_out(self):
         out = ''.join((' type="', self.objPattern, ' '))

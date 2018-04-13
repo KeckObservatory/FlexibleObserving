@@ -3,6 +3,15 @@ function Oopgui(){
 
     function El(id) { return document.getElementById(id); }
 
+    function formatGET(vars) {
+        var qry = "";
+        for (val in vars){
+            qry += val + "=" + vars[val] + "&";
+        }
+        qry = qry.slice(0,qry.length-1);
+        return qry;
+    }
+
     self.enableLGS = function () {
         var aomode = El('aoType');
         if (aomode.value == 'LGS') {
@@ -229,7 +238,7 @@ function Oopgui(){
 
     self.update = function () {
         function callback(data){
-            window.alert(data);
+            console.log("In the callback");
             El('imgResult').src='data:image/png;base64,' + data;
         }
         var params = {
@@ -264,7 +273,9 @@ function Oopgui(){
             'skyHgtY':El('skyHgtY').value
         };
 
-        ajaxCall ('drawgui', params, callback);
+        qry = formatGET(params);
+        El('imgResult').src='drawgui?'+qry;
+        //ajaxCall ('drawgui', params, callback);
     };
 
     self.echo = function () {
