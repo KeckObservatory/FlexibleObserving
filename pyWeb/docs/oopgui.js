@@ -12,6 +12,16 @@ function Oopgui(){
         return qry;
     }
 
+    function openDDF() {
+        var file = e.target.files[0];
+        if(!file) {
+            return;
+        }
+        var reader = new FileReader();
+        reader.onload = function(e) {
+        }
+    }
+
     self.enableLGS = function () {
         var aomode = El('aoType');
         if (aomode.value == 'LGS') {
@@ -91,7 +101,7 @@ function Oopgui(){
             }
         }
     };
-    
+
     self.skyMode = function () {
         var pattern = El('skyPattern');
         if (pattern.value == "None") {
@@ -173,7 +183,7 @@ function Oopgui(){
             }
         }
     };
-    
+
     self.setMode = function (){
         var mode = El('imgMode');
         if (mode.value == 'Disabled'){
@@ -276,13 +286,6 @@ function Oopgui(){
         qry = formatGET(params);
         El('imgResult').src='drawgui?'+qry;
         //ajaxCall ('drawgui', params, callback);
-    };
-
-    self.echo = function () {
-        function callback (data) {
-            El('mypara').innerHTML = data['result'];
-        }
-        ajaxCall('echothis', {}, callback);
     };
 
     El('updateBt').onclick = self.update;

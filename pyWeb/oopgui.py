@@ -104,11 +104,27 @@ class Oopgui:
         self.queueDir = qdir
     def send_to_queue(self):
         pass
+
+    def loadDDF(self):
+        pass
+
     def rescale(self):
-        if self.mode == 'spec':
+        xmin += self.initOffX if self.initOffX <= 0 else self.initOffX
+        ymin += self.initOffY if self.initOffY <= 0 else self.initOffY
+        if skyPattern != 'None':
+            xmin += self.nodOffX if self.nodOffX <= 0 else self.nodOffX
+            ymin += self.nodOffY if self.nodOffY <= 0 else self.nodOffY
+
+        if self.mode == 'Disabled':
             pass
-        elif self.mode in ['imag','both']:
+        elif self.mode == 'Independent':
             pass
+        else:
+            pass
+
+        xRange = self.xMax - self.xMin
+        yRange = self.yMax - self.yMin
+        self.gridScale = xRange / 8.0 if xRange > yRange else yRange / 8.0
 
     def draw_fig(self):
         self.fig = plt.figure(figsize=(8,8))
@@ -122,6 +138,8 @@ class Oopgui:
         plt.grid()
         self.draw[self.objPattern]()
         self.draw[self.skyPattern]()
+        self.add_origin()
+        self.add_ref()
 
     def add_origin(self):
         self.ax.add_patch(
@@ -154,6 +172,7 @@ class Oopgui:
             fill = False,               # remove background
             linewidth = 3
         )
+
     def add_sky_box(self, boxNum):
         return pch.Rectangle(
             (self.objX+self.objInitX+self.skyInitX
@@ -176,6 +195,7 @@ class Oopgui:
             fill = False,               # remove background
             linewidth = 3
         )
+
     def add_sky_diamond(self):#, boxNum):
         xoff = np.cos(np.radians(47.5))
         yoff = np.sin(np.radians(47.5))
@@ -187,19 +207,25 @@ class Oopgui:
             fill = False,               # remove background
             linewidth = 3
         )
+
     def draw_none(self):
         pass
+
     def draw_stare(self):
-        if self.objPattern == 'Stare':
-            self.ax.add_patch(self.add_obj_box(0))
-        if self.skyPattern == 'Stare':
-            self.ax.add_patch(self.add_sky_box(0))
+        if self.mode in ['spec','both']:
+            if self.objPattern == 'Stare': self.ax.add_patch(self.add_obj_box(0))
+            if self.skyPattern == 'Stare': self.ax.add_patch(self.add_sky_box(0))
+        if self.mode in ['imag','both']:
+            if self.objPattern != 'Stare': self.ax.add_patch(self.add_obj_diamond(0))
+            if self.skyPattern != 'Stare': self.ax.add_patch(self.add_sky_diamond(0))
+
     def draw_box4(self):
         if self.mode in ['spec','both']:
-            self.ax.add_patch(self.add_box(0))
-            self.ax.add_patch(self.add_box(1))
-            self.ax.add_patch(self.add_box(2))
-            self.ax.add_patch(self.add_box(3))
+            if self.objPattern == 'Box4':
+                self.ax.add_patch(self.add_obj_box(0))
+                self.ax.add_patch(self.add_obj_box(1))
+                self.ax.add_patch(self.add_obj_box(2))
+                self.ax.add_patch(self.add_obj_box(3))
         if self.mode in ['imag','both']:
             self.ax.add_patch(self.add_obj_diamond(0))
             self.ax.add_patch(self.add_obj_diamond(1))
@@ -207,11 +233,11 @@ class Oopgui:
             self.ax.add_patch(self.add_obj_diamond(3))
     def draw_box5(self):
         if self.mode in ['spec','both']:
-            self.ax.add_patch(self.add_box(0))
-            self.ax.add_patch(self.add_box(1))
-            self.ax.add_patch(self.add_box(2))
-            self.ax.add_patch(self.add_box(3))
-            self.ax.add_patch(self.add_box(4))
+            self.ax.add_patch(self.add_obj_box(0))
+            self.ax.add_patch(self.add_obj_box(1))
+            self.ax.add_patch(self.add_obj_box(2))
+            self.ax.add_patch(self.add_obj_box(3))
+            self.ax.add_patch(self.add_obj_box(4))
         if self.mode in ['imag','both']:
             self.ax.add_patch(self.add_obj_diamond(0))
             self.ax.add_patch(self.add_obj_diamond(1))
@@ -220,15 +246,15 @@ class Oopgui:
             self.ax.add_patch(self.add_obj_diamond(4))
     def draw_box9(self):
         if self.mode in ['spec','both']:
-            self.ax.add_patch(self.add_box(0))
-            self.ax.add_patch(self.add_box(1))
-            self.ax.add_patch(self.add_box(2))
-            self.ax.add_patch(self.add_box(3))
-            self.ax.add_patch(self.add_box(4))
-            self.ax.add_patch(self.add_box(5))
-            self.ax.add_patch(self.add_box(6))
-            self.ax.add_patch(self.add_box(7))
-            self.ax.add_patch(self.add_box(8))
+            self.ax.add_patch(self.add_obj_box(0))
+            self.ax.add_patch(self.add_obj_box(1))
+            self.ax.add_patch(self.add_obj_box(2))
+            self.ax.add_patch(self.add_obj_box(3))
+            self.ax.add_patch(self.add_obj_box(4))
+            self.ax.add_patch(self.add_obj_box(5))
+            self.ax.add_patch(self.add_obj_box(6))
+            self.ax.add_patch(self.add_obj_box(7))
+            self.ax.add_patch(self.add_obj_box(8))
         if self.mode in ['imag','both']:
             self.ax.add_patch(self.add_obj_diamond(0))
             self.ax.add_patch(self.add_obj_diamond(1))
@@ -282,11 +308,12 @@ class Oopgui:
         except KeyError:
             print('Key Error')
 
-        #self.gridScale = self.rescale()
+        #self.rescale()
         self.draw_fig()
 
     def obj_dither_out(self):
         out = ''.join((' type="', self.objPattern, ' '))
+
     def save_to_file(self):
         with open(self.ddfname, 'w') as ddf:
             ddf.write('<?xml version="1.0" encoding="UTF-8"?>\n')
@@ -306,12 +333,8 @@ class Oopgui:
             ddf.write()
         print('File saved')
 
-    def echothis(self):
-        print('this is a test')
-
 myplot = Oopgui()
 plt.grid()
-
 
 def SpecFilters():
     """
