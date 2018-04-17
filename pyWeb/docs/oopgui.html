@@ -8,10 +8,28 @@
         <link rel="stylesheet" type="text/css" href="oopgui.css">
     </head>
 <body onload='Oopgui()'>
-<form name='oopgui' method='post' enctype='multipart/form-data' action='update'>
 <table id='container'>
     <tr class='outer'>
         <th colspan='4' style='font-size: 12pt'>OSIRIS Observation Preplanning GUI</th>
+    </tr>
+    <tr class='outer'>
+        <td colspan=4>
+            <div class="dropdown">
+            <button id=fileList class="dropbtn">File</button>
+                <div id="loadfile" class="dropdown-content">
+                    <button onclick="document.getElementById('file-input').click()">Open DDF</button>
+                    <input id='file-input' type="file" style="display:none;" />
+                    <button onclick="saveDDF()">Save DDF</button>
+                    <button onclick="makeCDF()">Create Calibration CDFs</button>
+                    <button onclick="clear()">Clear Fields</button>
+                </div>
+            <button id=queueList class=dropbtn>Queue</button>
+                <div id="queue" class="dropdown-content">
+                    <button onclick="setQueue()">Set Queue Directory</button>
+                    <button onclick="sendQueue()">Send to Queue</button>
+                </div>
+            </div>
+        </td>
     </tr>
     <tr>
         <td colspan='4' class='nopads'><img src='grid.PNG' id='imgResult' width='100%'></td>
@@ -270,6 +288,5 @@
         </td>
     </tr>
 </table>
-</form>
 </body>
 </html>

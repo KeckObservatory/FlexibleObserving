@@ -65,11 +65,6 @@ class TestAppHandler (EasyHTTPHandler):
         buf = imgData.read()
         return self.response(buf, 'image/png')
 
-    def echothis(self, req, qstr):
-        self.oop.echothis()
-        res = { 'result':'hello world' }
-        return self.response(json.dumps(res), self.PlainTextType)
-
 if __name__ == "__main__":
     import signal
     import os

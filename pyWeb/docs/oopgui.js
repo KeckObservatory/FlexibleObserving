@@ -22,6 +22,27 @@ function Oopgui(){
         }
     }
 
+    self.showFile = function(){
+        El("loadfile").classList.toggle("show");
+    }
+
+    self.showQueue = function(){
+        El('queue').classList.toggle('show');
+    }
+
+    window.onclick = function(event) {
+        if (!event.target.matches('.dropbtn')) {
+            var dropdowns = document.getElementsByClassName('dropdown-content');
+            var i;
+            for (i=0; i<dropdowns.length; i++) {
+                var openDropdown = dropdowns[i];
+                if (openDropdown.classList.contains('show')) {
+                    openDropdown.classList.remove('show')
+                }
+            }
+        }
+    }
+
     self.enableLGS = function () {
         var aomode = El('aoType');
         if (aomode.value == 'LGS') {
@@ -289,6 +310,8 @@ function Oopgui(){
     };
 
     El('updateBt').onclick = self.update;
+    El('fileList').onclick = self.showFile;
+    El('queueList').onclick = self.showQueue;
     El('echoBt').onclick = self.echo;
 
 }
