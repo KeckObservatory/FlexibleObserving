@@ -1,3 +1,4 @@
+
 import matplotlib.pyplot as plt
 import matplotlib.patches as pch
 import matplotlib.ticker as tkr
@@ -9,30 +10,30 @@ class Oopgui:
     def __init__(self):
         # Initial planning params
         self.mode = 'spec'
-        self.object = 'None'
+        self.object = 'none'
         self.objPattern = 'Stare'
         self.skyPattern = 'None'
         self.measurement = 'arcsec'
         self.aomode = 'NGS'
         self.queueDir = '~/'
         self.ddfname = 'test.ddf'
-        self.gridScale = 4.0 #0.2
+        self.gridScale = 4.0 #0.8
         self.boxWidth = 0.32
         self.boxHeight = 1.28
-        #self.filters = SpecFilters()
+        self.filters = SpecFilters()
 
         # Observing Parameters
         self.oriX = 0.0
         self.oriY = 0.0
         self.xMin = -16.0
-        self.xMax = 18.0
+        self.xMax = 16.1
         self.yMin = -16.0
-        self.yMax = 18.0
+        self.yMax = 16.1
 
-        self.objX = -0.16
-        self.objY = -0.64
-        self.skyX = -0.16
-        self.skyY = -0.64
+        self.specX = -0.16
+        self.specY = -0.64
+        self.imagX = -14.36
+        self.imagY = -0.64
         self.objInitX = 0.0
         self.objInitY = 0.0
         self.skyInitX = 0.0
@@ -41,22 +42,25 @@ class Oopgui:
         self.objOffY = 1.0
         self.skyOffX = 1.0
         self.skyOffY = 1.0
-        self.offDefs = {'Stare':[(0,0)],
-                'box4':[(0,0), (1,0), (1,-1), (0,-1)], 
-                'box5':[(0,0),(-1,1),(1,1),(1,-1),(-1,-1)],
-                'box9':[(0,0),(-1,1),(-1,-1),(1,1),(1,-1),
+        self.offDefs = {
+                'Stare':[(0,0)],
+                'Box4':[(0,0), (1,0), (1,-1), (0,-1)], 
+                'Box5':[(0,0),(-1,1),(1,1),(1,-1),(-1,-1)],
+                'Box9':[(0,0),(-1,1),(-1,-1),(1,1),(1,-1),
                         (-1,0),(1,0),(0,1),(0,-1)],
-                'dither':{'frames':1, 'length':1.0, 'height':1.0}, 
-                'raster':{'frames':9,'rows':1,'xstep':1.0, 'ystep':1.0}, 
-                'user':[]
+                'Dither':{'frames':1, 'length':1.0, 'height':1.0}, 
+                'Raster':{'frames':9,'rows':1,'xstep':1.0, 'ystep':1.0}, 
+                'User':[]
             }
-        self.filters = ['Opn','Jbb','Hbb','Kbb','Zbb',
+        self.filters = [
+                'Opn','Jbb','Hbb','Kbb','Zbb',
                 'Jn1','Jn2','Jn3','Hn1','Hn2',
                 'Hn3','Hn4','Hn5','Kn1','Kn2',
                 'Kn3','Kn4','Kn5','Zn3','Drk'
             ]
         self.filter = 'Opn'
-        self.draw = { 'None':self.draw_none,
+        self.draw = { 
+                'None':self.draw_none,
                 'Stare':self.draw_stare,
                 'Box4':self.draw_box4,
                 'Box5':self.draw_box5,
@@ -67,64 +71,23 @@ class Oopgui:
             }
 
         # Set up plot graphic
-        #%matplotlib inline
+        #get_ipython().magic('matplotlib inline')
         self.draw_fig()
-        self.ax.add_patch(
-            #self.add_obj_box(0)
-            self.add_obj_diamond()
-        )
-        self.ax.add_patch(
-            self.add_sky_box(0)
-        )
-        # Origin Circle
-        self.add_origin()
+        self.ax.grid()
 
-        # REF Focus
-        self.add_ref()
     # End __init__()
 
-    # Methods to set object variables
-    def set_obj_init_offset_x(self, val):
-        self.objInitOffsetX = val
-    def set_obj_init_offset_y(self, val):
-        self.objInitOffsetY = val
-    def set_sky_init_offset_x(self, val):
-        self.skyInitOffsetX = val
-    def set_sky_init_offset_y(self, val):
-        self.skyInitOffsetY = val
-    def set_obj_mode(self, mode):
-        self.mode = mode
-    def set_obj_pattern(self, pattern):
-        self.objPattern = pattern
-    def set_sky_pattern(self, pattern):
-        self.skyPattern = pattern
-    def set_scale(self, scale):
-        self.scale = scale
     def set_queue_dir(self, qdir):
         self.queueDir = qdir
+
     def send_to_queue(self):
         pass
 
-    def loadDDF(self):
-        pass
-
     def rescale(self):
-        xmin += self.initOffX if self.initOffX <= 0 else self.initOffX
-        ymin += self.initOffY if self.initOffY <= 0 else self.initOffY
-        if skyPattern != 'None':
-            xmin += self.nodOffX if self.nodOffX <= 0 else self.nodOffX
-            ymin += self.nodOffY if self.nodOffY <= 0 else self.nodOffY
-
-        if self.mode == 'Disabled':
+        if self.mode == 'spec':
             pass
-        elif self.mode == 'Independent':
+        elif self.mode in ['imag','both']:
             pass
-        else:
-            pass
-
-        xRange = self.xMax - self.xMin
-        yRange = self.yMax - self.yMin
-        self.gridScale = xRange / 8.0 if xRange > yRange else yRange / 8.0
 
     def draw_fig(self):
         self.fig = plt.figure(figsize=(8,8))
@@ -135,7 +98,6 @@ class Oopgui:
         self.ax.set_yticks(np.arange(self.yMin, self.yMax, self.gridScale))
 
         # Activate the draw function for the correct pattern
-        plt.grid()
         self.draw[self.objPattern]()
         self.draw[self.skyPattern]()
         self.add_origin()
@@ -163,9 +125,9 @@ class Oopgui:
 
     def add_obj_box(self, boxNum):
         return pch.Rectangle(
-            (self.objX+self.objInitX
+            (self.specX+self.objInitX
                 +self.offDefs[self.objPattern][boxNum][0]*self.objOffX,
-            self.objY+self.objInitY
+            self.specY+self.objInitY
                 +self.offDefs[self.objPattern][boxNum][1]*self.objOffY),    # (x,y)
             self.boxWidth,              # (width)
             self.boxHeight,             # (height)
@@ -175,35 +137,69 @@ class Oopgui:
 
     def add_sky_box(self, boxNum):
         return pch.Rectangle(
-            (self.objX+self.objInitX+self.skyInitX
-                +self.offDefs[self.objPattern][boxNum][0]*self.objOffX,
-            self.objY+self.objInitY+self.skyInitY
-                +self.offDefs[self.objPattern][boxNum][1]*self.objOffY),
+            (self.specX+self.objInitX+self.skyInitX
+                +self.offDefs[self.objPattern][boxNum][0]*self.skyOffX,
+            self.specY+self.objInitY+self.skyInitY
+                +self.offDefs[self.objPattern][boxNum][1]*self.skyOffY),
             self.boxWidth,              # (width)
             self.boxHeight,             # (height)
             fill = False,               # remove background
             linewidth = 3
         )
-    def add_obj_diamond(self):#, boxNum):
+
+    def add_obj_diamond(self, boxNum):
         xoff = np.cos(np.radians(47.5))
         yoff = np.sin(np.radians(47.5))
         return pch.Polygon(
-            np.array([[-14.3+self.objInitX+xoff,0+self.objInitY-yoff],
-                      [0+self.objInitX-xoff,14.3+self.objInitY-yoff],
-                      [14.3+self.objInitX-xoff,0+self.objInitY+yoff],
-                      [0+self.objInitX+xoff,self.objInitY-14.3+yoff]]),    # (x,y)
+            np.array(
+                [
+                    [-14.3+self.objInitX+xoff
+                        +self.offDefs[self.objPattern][boxNum][0]*self.objOffX, 
+                    0+self.objInitY-yoff
+                        +self.offDefs[self.objPattern][boxNum][1]*self.objOffY],
+                    [0+self.objInitX-xoff
+                        +self.offDefs[self.objPattern][boxNum][0]*self.objOffX,
+                    14.3+self.objInitY-yoff
+                        +self.offDefs[self.objPattern][boxNum][1]*self.objOffY],
+                    [14.3+self.objInitX-xoff
+                        +self.offDefs[self.objPattern][boxNum][0]*self.objOffX,
+                    0+self.objInitY+yoff
+                        +self.offDefs[self.objPattern][boxNum][1]*self.objOffY],
+                    [0+self.objInitX+xoff
+                        +self.offDefs[self.objPattern][boxNum][0]*self.objOffX,
+                    self.objInitY-14.3+yoff
+                        +self.offDefs[self.objPattern][boxNum][1]*self.objOffY
+                    ]
+                ]
+            ),
             fill = False,               # remove background
             linewidth = 3
         )
 
-    def add_sky_diamond(self):#, boxNum):
+    def add_sky_diamond(self, boxNum):
         xoff = np.cos(np.radians(47.5))
         yoff = np.sin(np.radians(47.5))
         return pch.Polygon(
-            np.array([[-14.3+self.objInitX+xoff,0+self.objInitY-yoff],
-                      [0+self.objInitX-xoff,14.3+self.objInitY-yoff],
-                      [14.3+self.objInitX-xoff,0+self.objInitY+yoff],
-                      [0+self.objInitX+xoff,self.objInitY-14.3+yoff]]),    # (x,y)
+            np.array(
+                [
+                    [-14.3+self.objInitX+self.skyInitX+xoff
+                        +self.offDefs[self.skyPattern][boxNum][0]*self.skyOffX,
+                    0+self.objInitY+self.skyInitY-yoff
+                        +self.offDefs[self.skyPattern][boxNum][0]*self.skyOffY],
+                    [0+self.objInitX-xoff
+                        +self.offDefs[self.skyPattern][boxNum][0]*self.skyOffX,
+                    14.3+self.objInitY-yoff
+                        +self.offDefs[self.skyPattern][boxNum][0]*self.skyOffY],
+                    [14.3+self.objInitX-xoff
+                        +self.offDefs[self.skyPattern][boxNum][0]*self.skyOffX,
+                    0+self.objInitY+yoff
+                        +self.offDefs[self.skyPattern][boxNum][0]*self.skyOffY],
+                    [0+self.objInitX+xoff
+                        +self.offDefs[self.skyPattern][boxNum][0]*self.skyOffX,
+                    self.objInitY-14.3+yoff
+                        +self.offDefs[self.skyPattern][boxNum][0]*self.skyOffY]
+                ]
+            ),
             fill = False,               # remove background
             linewidth = 3
         )
@@ -213,11 +209,15 @@ class Oopgui:
 
     def draw_stare(self):
         if self.mode in ['spec','both']:
-            if self.objPattern == 'Stare': self.ax.add_patch(self.add_obj_box(0))
-            if self.skyPattern == 'Stare': self.ax.add_patch(self.add_sky_box(0))
+            if self.objPattern == 'Stare':
+                self.ax.add_patch(self.add_obj_box(0))
+            if self.skyPattern == 'Stare':
+                self.ax.add_patch(self.add_sky_box(0))
         if self.mode in ['imag','both']:
-            if self.objPattern != 'Stare': self.ax.add_patch(self.add_obj_diamond(0))
-            if self.skyPattern != 'Stare': self.ax.add_patch(self.add_sky_diamond(0))
+            if self.objPattern == 'Stare':
+                self.ax.add_patch(self.add_obj_diamond(0))
+            if self.skyPattern == 'Stare':
+                self.ax.add_patch(self.add_sky_diamond(0))
 
     def draw_box4(self):
         if self.mode in ['spec','both']:
@@ -226,94 +226,141 @@ class Oopgui:
                 self.ax.add_patch(self.add_obj_box(1))
                 self.ax.add_patch(self.add_obj_box(2))
                 self.ax.add_patch(self.add_obj_box(3))
+            if self.skyPattern == 'Box4':
+                self.ax.add_patch(self.add_sky_box(0))
+                self.ax.add_patch(self.add_sky_box(1))
+                self.ax.add_patch(self.add_sky_box(2))
+                self.ax.add_patch(self.add_sky_box(3))
         if self.mode in ['imag','both']:
-            self.ax.add_patch(self.add_obj_diamond(0))
-            self.ax.add_patch(self.add_obj_diamond(1))
-            self.ax.add_patch(self.add_obj_diamond(2))
-            self.ax.add_patch(self.add_obj_diamond(3))
+            if self.objPattern == 'Box4':
+                self.ax.add_patch(self.add_obj_diamond(0))
+                self.ax.add_patch(self.add_obj_diamond(1))
+                self.ax.add_patch(self.add_obj_diamond(2))
+                self.ax.add_patch(self.add_obj_diamond(3))
+            if self.skyPattern == 'Box4':
+                self.ax.add_patch(self.add_sky_diamond(0))
+                self.ax.add_patch(self.add_sky_diamond(1))
+                self.ax.add_patch(self.add_sky_diamond(2))
+                self.ax.add_patch(self.add_sky_diamond(3))
+
     def draw_box5(self):
         if self.mode in ['spec','both']:
-            self.ax.add_patch(self.add_obj_box(0))
-            self.ax.add_patch(self.add_obj_box(1))
-            self.ax.add_patch(self.add_obj_box(2))
-            self.ax.add_patch(self.add_obj_box(3))
-            self.ax.add_patch(self.add_obj_box(4))
+            if self.objPattern == 'Box5':
+                self.ax.add_patch(self.add_obj_box(0))
+                self.ax.add_patch(self.add_obj_box(1))
+                self.ax.add_patch(self.add_obj_box(2))
+                self.ax.add_patch(self.add_obj_box(3))
+                self.ax.add_patch(self.add_obj_box(4))
+            if self.skyPattern == 'Box5':
+                self.ax.add_patch(self.add_sky_box(0))
+                self.ax.add_patch(self.add_sky_box(1))
+                self.ax.add_patch(self.add_sky_box(2))
+                self.ax.add_patch(self.add_sky_box(3))
+                self.ax.add_patch(self.add_sky_box(4))
         if self.mode in ['imag','both']:
-            self.ax.add_patch(self.add_obj_diamond(0))
-            self.ax.add_patch(self.add_obj_diamond(1))
-            self.ax.add_patch(self.add_obj_diamond(2))
-            self.ax.add_patch(self.add_obj_diamond(3))
-            self.ax.add_patch(self.add_obj_diamond(4))
+            if self.objPattern == 'Box5':
+                self.ax.add_patch(self.add_obj_diamond(0))
+                self.ax.add_patch(self.add_obj_diamond(1))
+                self.ax.add_patch(self.add_obj_diamond(2))
+                self.ax.add_patch(self.add_obj_diamond(3))
+                self.ax.add_patch(self.add_obj_diamond(4))
+            if self.skyPattern == 'Box5':
+                self.ax.add_patch(self.add_sky_diamond(0))
+                self.ax.add_patch(self.add_sky_diamond(1))
+                self.ax.add_patch(self.add_sky_diamond(2))
+                self.ax.add_patch(self.add_sky_diamond(3))
+                self.ax.add_patch(self.add_sky_diamond(4))
+
     def draw_box9(self):
         if self.mode in ['spec','both']:
-            self.ax.add_patch(self.add_obj_box(0))
-            self.ax.add_patch(self.add_obj_box(1))
-            self.ax.add_patch(self.add_obj_box(2))
-            self.ax.add_patch(self.add_obj_box(3))
-            self.ax.add_patch(self.add_obj_box(4))
-            self.ax.add_patch(self.add_obj_box(5))
-            self.ax.add_patch(self.add_obj_box(6))
-            self.ax.add_patch(self.add_obj_box(7))
-            self.ax.add_patch(self.add_obj_box(8))
+            if self.objPattern == 'Box9':
+                self.ax.add_patch(self.add_obj_box(0))
+                self.ax.add_patch(self.add_obj_box(1))
+                self.ax.add_patch(self.add_obj_box(2))
+                self.ax.add_patch(self.add_obj_box(3))
+                self.ax.add_patch(self.add_obj_box(4))
+                self.ax.add_patch(self.add_obj_box(5))
+                self.ax.add_patch(self.add_obj_box(6))
+                self.ax.add_patch(self.add_obj_box(7))
+                self.ax.add_patch(self.add_obj_box(8))
+            if self.skyPattern == 'Box9':
+                self.ax.add_patch(self.add_sky_box(0))
+                self.ax.add_patch(self.add_sky_box(1))
+                self.ax.add_patch(self.add_sky_box(2))
+                self.ax.add_patch(self.add_sky_box(3))
+                self.ax.add_patch(self.add_sky_box(4))
+                self.ax.add_patch(self.add_sky_box(5))
+                self.ax.add_patch(self.add_sky_box(6))
+                self.ax.add_patch(self.add_sky_box(7))
+                self.ax.add_patch(self.add_sky_box(8))
         if self.mode in ['imag','both']:
-            self.ax.add_patch(self.add_obj_diamond(0))
-            self.ax.add_patch(self.add_obj_diamond(1))
-            self.ax.add_patch(self.add_obj_diamond(2))
-            self.ax.add_patch(self.add_obj_diamond(3))
-            self.ax.add_patch(self.add_obj_diamond(4))
-            self.ax.add_patch(self.add_obj_diamond(5))
-            self.ax.add_patch(self.add_obj_diamond(6))
-            self.ax.add_patch(self.add_obj_diamond(7))
-            self.ax.add_patch(self.add_obj_diamond(8))
+            if self.objPattern == 'Box9':
+                self.ax.add_patch(self.add_obj_diamond(0))
+                self.ax.add_patch(self.add_obj_diamond(1))
+                self.ax.add_patch(self.add_obj_diamond(2))
+                self.ax.add_patch(self.add_obj_diamond(3))
+                self.ax.add_patch(self.add_obj_diamond(4))
+                self.ax.add_patch(self.add_obj_diamond(5))
+                self.ax.add_patch(self.add_obj_diamond(6))
+                self.ax.add_patch(self.add_obj_diamond(7))
+                self.ax.add_patch(self.add_obj_diamond(8))
+            if self.skyPattern == 'Box9':
+                self.ax.add_patch(self.add_sky_diamond(0))
+                self.ax.add_patch(self.add_sky_diamond(1))
+                self.ax.add_patch(self.add_sky_diamond(2))
+                self.ax.add_patch(self.add_sky_diamond(3))
+                self.ax.add_patch(self.add_sky_diamond(4))
+                self.ax.add_patch(self.add_sky_diamond(5))
+                self.ax.add_patch(self.add_sky_diamond(6))
+                self.ax.add_patch(self.add_sky_diamond(7))
+                self.ax.add_patch(self.add_sky_diamond(8))
+
     def draw_stat(self):
         pass
+
     def draw_raster(self):
         pass
+
     def draw_user(self, defs):
         for frame in defs:
             if self.mode in ['spec','both']:
-                pass
+                self.ax.add_patch(self.add_obj_box(0))
             if self.mode in ['imag','both']:
                 pass
 
     def update(self, qstr):
-        try:
-            self.mode = qstr['imgMode'][0]
-            self.dataset = qstr['dataset'][0]
-            self.object = qstr['object'][0]
-            self.targType = qstr['targType'][0]
-            self.coordSys = qstr['coordSys'][0]
-            self.aoType = qstr['aoType'][0]
-            self.lgsMode = qstr['lgsMode'][0]
-            self.specFilter = qstr['specFilter'][0]
-            self.scale = qstr['scale'][0]
-            self.specCoadds = qstr['specCoadds'][0]
-            self.specItime = qstr['specItime'][0]
-            self.initOffX = qstr['initOffX'][0]
-            self.initOffY = qstr['initOffY'][0]
-            self.objPattern = qstr['objPattern'][0]
-            self.objFrames = qstr['objFrames'][0]
-            self.objLenX = qstr['objLenX'][0]
-            self.objHgtY = qstr['objHgtY'][0]
-            self.imgFilter = qstr['imgFilter'][0]
-            self.repeats = qstr['repeats'][0]
-            self.imgCoadds = qstr['imgCoadds'][0]
-            self.imgItime = qstr['imgItime'][0]
-            self.nodOffX = qstr['nodOffX'][0]
-            self.nodOffY = qstr['nodOffY'][0]
-            self.skyPattern = qstr['skyPattern'][0]
-            self.skyFrame = qstr['skyFrames'][0]
-            self.skyLenX = qstr['skyLenX'][0]
-            self.skyHgtY = qstr['skyHgtY'][0]
-        except KeyError:
-            print('Key Error')
+        self.mode = qstr['imgMode']
+        self.dataset = qstr['dataset']
+        self.object = qstr['object']
+        self.targType = qstr['targType']
+        self.coordSys = qstr['coordSys']
+        self.aoType = qstr['aoType']
+        self.lgsMode = qstr['lgsMode']
+        self.specFilter = qstr['specFilter']
+        self.scale = qstr['scale']
+        self.specCoadds = qstr['specCoadds']
+        self.specItime = qstr['specItime']
+        self.initOffX = qstr['initOffX']
+        self.initOffY = qstr['initOffY']
+        self.objPattern = qstr['objPattern']
+        self.objFrames = qstr['objFrames']
+        self.objLenX = qstr['objLenX']
+        self.objHgtY = qstr['objHgtY']
+        self.imgFilter = qstr['imgFilter']
+        self.repeats = qstr['repeats']
+        self.imgCoadds = qstr['imgCoadds']
+        self.imgItime = qstr['imgItime']
+        self.nodOffX = qstr['nodOffX']
+        self.nodOffY = qstr['nodOffY']
+        self.skyPattern = qstr['skyPattern']
+        self.skyFrame = qstr['skyFrames']
+        self.skyLenX = qstr['skyLenX']
+        self.skyHgtY = qstr['skyHgtY']
 
-        #self.rescale()
-        self.draw_fig()
+        self.gridScale = self.rescale()
 
     def obj_dither_out(self):
         out = ''.join((' type="', self.objPattern, ' '))
-
     def save_to_file(self):
         with open(self.ddfname, 'w') as ddf:
             ddf.write('<?xml version="1.0" encoding="UTF-8"?>\n')
@@ -332,9 +379,6 @@ class Oopgui:
             ddf.write('\t\t<objectDither', self.obj_dither_out(), '/>\n')
             ddf.write()
         print('File saved')
-
-myplot = Oopgui()
-plt.grid()
 
 def SpecFilters():
     """
