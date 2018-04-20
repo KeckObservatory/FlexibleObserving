@@ -1,4 +1,3 @@
-
 import matplotlib.pyplot as plt
 import matplotlib.patches as pch
 import matplotlib.ticker as tkr
@@ -185,19 +184,19 @@ class Oopgui:
                     [-14.3+self.objInitX+self.skyInitX+xoff
                         +self.offDefs[self.skyPattern][boxNum][0]*self.skyOffX,
                     0+self.objInitY+self.skyInitY-yoff
-                        +self.offDefs[self.skyPattern][boxNum][0]*self.skyOffY],
+                        +self.offDefs[self.skyPattern][boxNum][1]*self.skyOffY],
                     [0+self.objInitX-xoff
                         +self.offDefs[self.skyPattern][boxNum][0]*self.skyOffX,
                     14.3+self.objInitY-yoff
-                        +self.offDefs[self.skyPattern][boxNum][0]*self.skyOffY],
+                        +self.offDefs[self.skyPattern][boxNum][1]*self.skyOffY],
                     [14.3+self.objInitX-xoff
                         +self.offDefs[self.skyPattern][boxNum][0]*self.skyOffX,
                     0+self.objInitY+yoff
-                        +self.offDefs[self.skyPattern][boxNum][0]*self.skyOffY],
+                        +self.offDefs[self.skyPattern][boxNum][1]*self.skyOffY],
                     [0+self.objInitX+xoff
                         +self.offDefs[self.skyPattern][boxNum][0]*self.skyOffX,
                     self.objInitY-14.3+yoff
-                        +self.offDefs[self.skyPattern][boxNum][0]*self.skyOffY]
+                        +self.offDefs[self.skyPattern][boxNum][1]*self.skyOffY]
                 ]
             ),
             fill = False,               # remove background
@@ -329,35 +328,38 @@ class Oopgui:
                 pass
 
     def update(self, qstr):
-        self.mode = qstr['imgMode']
-        self.dataset = qstr['dataset']
-        self.object = qstr['object']
-        self.targType = qstr['targType']
-        self.coordSys = qstr['coordSys']
-        self.aoType = qstr['aoType']
-        self.lgsMode = qstr['lgsMode']
-        self.specFilter = qstr['specFilter']
-        self.scale = qstr['scale']
-        self.specCoadds = qstr['specCoadds']
-        self.specItime = qstr['specItime']
-        self.initOffX = qstr['initOffX']
-        self.initOffY = qstr['initOffY']
-        self.objPattern = qstr['objPattern']
-        self.objFrames = qstr['objFrames']
-        self.objLenX = qstr['objLenX']
-        self.objHgtY = qstr['objHgtY']
-        self.imgFilter = qstr['imgFilter']
-        self.repeats = qstr['repeats']
-        self.imgCoadds = qstr['imgCoadds']
-        self.imgItime = qstr['imgItime']
-        self.nodOffX = qstr['nodOffX']
-        self.nodOffY = qstr['nodOffY']
-        self.skyPattern = qstr['skyPattern']
-        self.skyFrame = qstr['skyFrames']
-        self.skyLenX = qstr['skyLenX']
-        self.skyHgtY = qstr['skyHgtY']
+        if qstr['imgMode'][0] == 'Disabled': self.mode = 'spec'
+        elif qstr['imgMode'][0] == 'Independent': self.mode = 'imag'
+        else: self.mode = 'both'
+        self.dataset = qstr['dataset'][0]
+        self.object = qstr['object'][0]
+        self.targType = qstr['targType'][0]
+        self.coordSys = qstr['coordSys'][0]
+        self.aoType = qstr['aoType'][0]
+        self.lgsMode = qstr['lgsMode'][0]
+        self.specFilter = qstr['specFilter'][0]
+        self.scale = qstr['scale'][0]
+        self.specCoadds = qstr['specCoadds'][0]
+        self.specItime = qstr['specItime'][0]
+        self.initOffX = qstr['initOffX'][0]
+        self.initOffY = qstr['initOffY'][0]
+        self.objPattern = qstr['objPattern'][0]
+        self.objFrames = qstr['objFrames'][0]
+        self.objLenX = qstr['objLenX'][0]
+        self.objHgtY = qstr['objHgtY'][0]
+        self.imgFilter = qstr['imgFilter'][0]
+        self.repeats = qstr['repeats'][0]
+        self.imgCoadds = qstr['imgCoadds'][0]
+        self.imgItime = qstr['imgItime'][0]
+        self.nodOffX = qstr['nodOffX'][0]
+        self.nodOffY = qstr['nodOffY'][0]
+        self.skyPattern = qstr['skyPattern'][0]
+        self.skyFrame = qstr['skyFrames'][0]
+        self.skyLenX = qstr['skyLenX'][0]
+        self.skyHgtY = qstr['skyHgtY'][0]
 
         self.gridScale = self.rescale()
+        self.draw_fig()
 
     def obj_dither_out(self):
         out = ''.join((' type="', self.objPattern, ' '))
