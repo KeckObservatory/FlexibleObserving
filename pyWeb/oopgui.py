@@ -87,34 +87,50 @@ class Oopgui:
         minY = 0
         maxY = 0
         if self.mode == 'spec':
-            boxMinX = -0.5*self.boxWidth + self.initOffX
-            boxMaxX = 0.5*self.boxWidth + self.initOffX
-            boxMinY = -0.5*self.boxHeight + self.initOffY
-            boxMaxY = 0.5*self.boxHeight + self.initOffY
-            if self.objPattern in ['Box4','Box5','Box9']:
-                objBoxMinX = boxMinX - self.objLenX
-                objBoxMaxX = boxMaxX + self.objLenX
-                objBoxMinY = boxMinY - self.objHgtY
-                objBoxMaxY = boxMaxY + self.objHgtY
-            elif self.objPattern == 'Statistical Dither':
-                pass
-            elif self.objPattern == 'Raster Scan':
-                pass
-            elif self.objPattern == 'User Defined':
-                pass
-            if self.skyPattern in ['Box4','Box5','Box9']:
-                skyBoxMinX = boxMinX + self.nodOffX - self.skyLenX
-                skyBoxMaxX = boxMaxX + self.nodOffX + self.skyLenX
-                skyBoxMinY = boxMinY + self.nodOffY - self.skyHgtY
-                skyBoxMaxY = boxMaxY + self.nodOffY + self.skyHgtY
-            elif self.skyPattern == 'Statistical Dither':
-                pass
-            elif self.skyPattern == 'Raster Scan':
-                pass
-            elif self.skyPattern == 'User Defined':
-                pass
+            if self.objPattern != 'None':
+                if self.initOffX < 0:
+                    minX -= self.initOffX
+                    maxX -= self.initOffX
+                elif self.initOffX > 0:
+                    minX += self.initOffX
+                    maxX += self.initOffX
+                if self.initOffY < 0:
+                    minY -= self.initOffY
+                    maxY -= self.initOffY
+                elif self.initOffX > 0:
+                    minY += self.initOffY
+                    maxY += self.initOffY
+                minX -= abs(self.objLenX)
+                maxX += abs(self.objLenX)
+                minY -= abs(self.objHgtY)
+                maxY += abs(self.objHgtY)
+            if self.skyPattern != 'None':
+                if self.initOffX + self.nodOffX - abs(self.skyLenX) < minX:
+                    minX = self.initOffX + self.nodOffX - abs(self.skyLenX)
+                if self.initOffX + self.nodOffX + abs(self.skyLenX) > maxX:
+                    maxX = self.initOffX + self.nodOffX + abs(self.skyLenX)
+                if self.initOffY + self.nodOffY - abs(self.skyHgtY) < minY:
+                    minY = self.initOffY + self.nodOffY - abs(self.skyHgtY)
+                if self.initOffY + self.nodOffY + abs(self.skyHgtY) > maxY:
+                    maxY = self.initOffY + self.nodOffY + abs(self.skyHgtY)
+
+            self.xMin = minX - 2.0
+            self.xMax = maxX + 2.0
+            self.yMin = minY - 2.0
+            self.yMax = maxY + 2.0
         elif self.mode in ['imag','both']:
             pass
+
+        xDiff = self.xMax - self.xMin
+        yDiff = self.yMax - self.yMin
+        if xDiff > yDiff:
+            self.yMin -= 0.5*(xDiff-yDiff)
+            self.yMax += 0.5*(xDiff-yDiff)
+        elif yDiff > xDiff:
+            self.xMin -= 0.5*(yDiff-xDiff)
+            self.xMax += 0.5*(yDiff-xDiff)
+
+        return (self.xMax - self.xMin)/8.0
 
     def draw_fig(self):
         self.fig = plt.figure(figsize=(8,8))
@@ -403,7 +419,7 @@ class Oopgui:
         #self.defs = qstr['defs'][0]
 
         self.print_all()
-        #self.gridScale = self.rescale()
+        self.gridScale = self.rescale()
         self.draw_fig()
         self.ax.grid()
 
@@ -435,6 +451,11 @@ class Oopgui:
         print('sframe:',self.skyFrame)
         print('slenx :',self.skyLenX)
         print('shgty :',self.skyHgtY)
+        print('xmin  :',self.xMin)
+        print('xmax  :',self.xMax)
+        print('ymin  :',self.yMin)
+        print('ymax  :',self.yMax)
+        print('gscale:',self.gridScale)
 
     def obj_dither_out(self):
         out = ''.join((' type="', self.objPattern, ' '))
