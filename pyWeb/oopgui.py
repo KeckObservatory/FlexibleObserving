@@ -31,8 +31,8 @@ class Oopgui:
 
         self.specX = -0.16
         self.specY = -0.64
-        self.imagX = -14.36
-        self.imagY = -0.64
+        self.imagX = -14.388
+        self.imagY = 15.138
         self.initOffX = 0.0
         self.initOffY = 0.0
         self.nodOffX = 0.0
@@ -86,40 +86,58 @@ class Oopgui:
         maxX = 0
         minY = 0
         maxY = 0
-        if self.mode == 'spec':
-            if self.objPattern != 'None':
-                if self.initOffX < 0:
-                    minX -= self.initOffX
-                    maxX -= self.initOffX
-                elif self.initOffX > 0:
-                    minX += self.initOffX
-                    maxX += self.initOffX
-                if self.initOffY < 0:
-                    minY -= self.initOffY
-                    maxY -= self.initOffY
-                elif self.initOffX > 0:
-                    minY += self.initOffY
-                    maxY += self.initOffY
-                minX -= abs(self.objLenX)
-                maxX += abs(self.objLenX)
-                minY -= abs(self.objHgtY)
-                maxY += abs(self.objHgtY)
-            if self.skyPattern != 'None':
-                if self.initOffX + self.nodOffX - abs(self.skyLenX) < minX:
-                    minX = self.initOffX + self.nodOffX - abs(self.skyLenX)
-                if self.initOffX + self.nodOffX + abs(self.skyLenX) > maxX:
-                    maxX = self.initOffX + self.nodOffX + abs(self.skyLenX)
-                if self.initOffY + self.nodOffY - abs(self.skyHgtY) < minY:
-                    minY = self.initOffY + self.nodOffY - abs(self.skyHgtY)
-                if self.initOffY + self.nodOffY + abs(self.skyHgtY) > maxY:
-                    maxY = self.initOffY + self.nodOffY + abs(self.skyHgtY)
+        if self.objPattern != 'None':
+            if self.initOffX < 0:
+                minX -= self.initOffX
+                maxX -= self.initOffX
+            elif self.initOffX > 0:
+                minX += self.initOffX
+                maxX += self.initOffX
+            if self.initOffY < 0:
+                minY -= self.initOffY
+                maxY -= self.initOffY
+            elif self.initOffX > 0:
+                minY += self.initOffY
+                maxY += self.initOffY
+            minX -= abs(self.objLenX)
+            maxX += abs(self.objLenX)
+            minY -= abs(self.objHgtY)
+            maxY += abs(self.objHgtY)
+        if self.skyPattern != 'None':
+            if self.initOffX + self.nodOffX - abs(self.skyLenX) < minX:
+                minX = self.initOffX + self.nodOffX - abs(self.skyLenX)
+            if self.initOffX + self.nodOffX + abs(self.skyLenX) > maxX:
+                maxX = self.initOffX + self.nodOffX + abs(self.skyLenX)
+            if self.initOffY + self.nodOffY - abs(self.skyHgtY) < minY:
+                minY = self.initOffY + self.nodOffY - abs(self.skyHgtY)
+            if self.initOffY + self.nodOffY + abs(self.skyHgtY) > maxY:
+                maxY = self.initOffY + self.nodOffY + abs(self.skyHgtY)
 
-            self.xMin = minX - 2.0
-            self.xMax = maxX + 2.0
-            self.yMin = minY - 2.0
-            self.yMax = maxY + 2.0
-        elif self.mode in ['imag','both']:
-            pass
+        if self.mode == 'spec':
+            self.xMin = minX - 1.0
+            self.xMax = maxX + 1.0
+            self.yMin = minY - 1.0
+            self.yMax = maxY + 1.0
+        elif self.mode == 'imag':
+            self.xMin = minX + self.imagX - 14.3
+            self.xMax = maxX + self.imagX + 14.3
+            self.yMin = minY + self.imagY - 14.3
+            self.yMax = maxY + self.imagY + 14.3
+        else: # self.mode == both
+            xMinSpec = minX - 1.0
+            xMaxSpec = maxX + 1.0
+            yMinSpec = minY - 1.0
+            yMaxSpec = maxY + 1.0
+
+            xMinImag = minX + self.imagX - 14.3
+            xMaxImag = maxX + self.imagX + 14.3
+            yMinImag = minY + self.imagY - 14.3
+            yMaxImag = maxY + self.imagY + 14.3
+
+            self.xMin = xMinSpec if xMinSpec < xMinImag else xMinImag
+            self.xMax = xMaxSpec if xMaxSpec > xMaxImag else xMaxImag
+            self.yMin = yMinSpec if yMinSpec < yMinImag else yMinImag
+            self.yMax = yMaxSpec if yMaxSpec > yMaxImag else yMaxImag
 
         xDiff = self.xMax - self.xMin
         yDiff = self.yMax - self.yMin
@@ -130,7 +148,11 @@ class Oopgui:
             self.xMin -= 0.5*(yDiff-xDiff)
             self.xMax += 0.5*(yDiff-xDiff)
 
-        return (self.xMax - self.xMin)/8.0
+        gridScale = (self.xMax - self.xMin)/8.0
+        self.xMax += gridScale
+        self.yMax += gridScale
+
+        return gridScale
 
     def draw_fig(self):
         self.fig = plt.figure(figsize=(8,8))
@@ -201,14 +223,22 @@ class Oopgui:
         return pch.Polygon(
             np.array(
                 [
-                    [-14.3 + self.initOffX + xoff + xpos*self.objLenX,
-                    0 + self.initOffY - yoff + ypos*self.objHgtY],
-                    [0 + self.initOffX - xoff + xpos*self.objLenX,
-                    14.3 + self.initOffY - yoff + ypos*self.objHgtY],
-                    [14.3 + self.initOffX - xoff + xpos*self.objLenX,
-                    0 + self.initOffY + yoff + ypos*self.objHgtY],
-                    [0 + self.initOffX + xoff + xpos*self.objLenX,
-                    -14.3 + self.initOffY + yoff + ypos*self.objHgtY]
+                    [self.imagX - 14.3 + self.initOffX
+                            + xoff + xpos*self.objLenX,
+                        self.imagY + 0 + self.initOffY
+                            - yoff + ypos*self.objHgtY],
+                    [self.imagX + 0 + self.initOffX
+                            - xoff + xpos*self.objLenX,
+                        self.imagY + 14.3 + self.initOffY
+                            - yoff + ypos*self.objHgtY],
+                    [self.imagX + 14.3 + self.initOffX
+                            - xoff + xpos*self.objLenX,
+                        self.imagY + 0 + self.initOffY
+                            + yoff + ypos*self.objHgtY],
+                    [self.imagX + 0 + self.initOffX
+                            + xoff + xpos*self.objLenX,
+                        self.imagY -14.3 + self.initOffY
+                            + yoff + ypos*self.objHgtY]
                 ]
             ),
             fill = False,
@@ -226,14 +256,22 @@ class Oopgui:
         return pch.Polygon(
             np.array(
                 [
-                    [-14.3 + self.initOffX + self.nodOffX + xoff + xpos*self.skyLenX,
-                    0 + self.initOffY + self.nodOffY - yoff + ypos*self.skyHgtY],
-                    [0 + self.initOffX + self.nodOffX - xoff + xpos*self.skyLenX,
-                    14.3 + self.initOffY + self.nodOffY - yoff + ypos*self.skyHgtY],
-                    [14.3 + self.initOffX + self.nodOffX - xoff + xpos*self.skyLenX,
-                    0 + self.initOffY + self.nodOffY + yoff + ypos*self.skyHgtY],
-                    [0 + self.initOffX + self.nodOffX + xoff + xpos*self.skyLenX,
-                    -14.3 + self.initOffY + self.nodOffY + yoff + ypos*self.skyHgtY]
+                    [self.imagX -14.3 + self.initOffX
+                        + self.nodOffX + xoff + xpos*self.skyLenX,
+                    self.imagY +0 + self.initOffY + self.nodOffY
+                        - yoff + ypos*self.skyHgtY],
+                    [self.imagX + 0 + self.initOffX
+                        + self.nodOffX - xoff + xpos*self.skyLenX,
+                    self.imagY + 14.3 + self.initOffY + self.nodOffY
+                        - yoff + ypos*self.skyHgtY],
+                    [self.imagX + 14.3 + self.initOffX + self.nodOffX
+                        - xoff + xpos*self.skyLenX,
+                    self.imagY +0 + self.initOffY + self.nodOffY
+                        + yoff + ypos*self.skyHgtY],
+                    [self.imagX + 0 + self.initOffX + self.nodOffX
+                        + xoff + xpos*self.skyLenX,
+                    self.imagY - 14.3 + self.initOffY + self.nodOffY
+                        + yoff + ypos*self.skyHgtY]
                 ]
             ),
             fill = False,
@@ -418,8 +456,8 @@ class Oopgui:
         self.skyHgtY = float(qstr['skyHgtY'][0])
         #self.defs = qstr['defs'][0]
 
-        self.print_all()
         self.gridScale = self.rescale()
+        self.print_all()
         self.draw_fig()
         self.ax.grid()
 
