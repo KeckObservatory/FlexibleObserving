@@ -3,6 +3,30 @@ table {
     font-size: 9px;
     border-collapse: collapse;
 }
+
+#userdefs {
+    position: absolute;
+    left: 8px;
+    top: 65px;
+    z-index: 1;
+    display: none;
+}
+
+#defs {
+    border: 1px solid black;
+    width: 5in;
+}
+
+#defs tr {
+    width: 100%;
+}
+
+#defs td {
+    margin: 5px;
+    padding: 5px;
+    background-color: white;
+}
+
 #container {
     table-layout: fixed;
     border: 1px solid #444;

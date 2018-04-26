@@ -139,8 +139,11 @@ class Oopgui:
             self.yMin = yMinSpec if yMinSpec < yMinImag else yMinImag
             self.yMax = yMaxSpec if yMaxSpec > yMaxImag else yMaxImag
 
+        # Calculate the difference between min and max
         xDiff = self.xMax - self.xMin
         yDiff = self.yMax - self.yMin
+
+        # Make both ranges the same as the larger one
         if xDiff > yDiff:
             self.yMin -= 0.5*(xDiff-yDiff)
             self.yMax += 0.5*(xDiff-yDiff)
@@ -149,6 +152,9 @@ class Oopgui:
             self.xMax += 0.5*(yDiff-xDiff)
 
         gridScale = (self.xMax - self.xMin)/8.0
+
+        # Add a scale increment to the max so that
+        # they don't get cut off by a section
         self.xMax += gridScale
         self.yMax += gridScale
 

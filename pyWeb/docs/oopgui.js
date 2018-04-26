@@ -80,7 +80,7 @@ function Oopgui(){
             El('objFramesCell').setAttribute("colspan", 3);
             El('objFrames').disabled = false;
             El('objLenX').disabled = false;
-            El('objHgtY').disabled = false;t 
+            El('objHgtY').disabled = false;
             El('objOffLenStepX').innerHTML = 'Region Length: ';
             El('objOffHgtStepY').innerHTML = 'Region Height: ';
         }
@@ -267,11 +267,104 @@ function Oopgui(){
         }
     };
 
-    self.update = function () {
+    self.showPosList = function (){
+        var userdefs = El('userdefs');
+        var numObjFrames = El('objFrames').value;
+        var numSkyFrames = El('skyFrames').value;
+        var count = 1;
+        if (userdefs.style.display == 'none') userdefs.style.display = 'block';
+        else userdefs.style.display = 'none';
+
+        // Remove any previous nodes
+        while(userdefs.hasChildNodes()){
+            userdefs.removeChild(userdefs.lastChild);
+        }
+
+        // Append new child nodes
+        var table = document.createElement('table');
+        table.id = 'defs';
+        userdefs.appendChild(table);
+        table = El('defs');
+        var row = table.insertRow(0);
+        var cell = row.insertCell(0);
+        cell.innerHTML = '#';
+        cell = row.insertCell(1);
+        cell.innerHTML = 'Xoff (")';
+        cell = row.insertCell(2);
+        cell.innerHTML = 'Yoff (")';
+        cell = row.insertCell(3);
+        cell.innerHTML = 'Sky?';
+
+        for(i=0; i<numObjFrames; i++){
+            row = document.createElement('tr');
+            cell = document.createElement('td');
+            cell.innerHTML = count;
+            row.appendChild(cell);
+            cell = document.createElement('td');
+            cell.innerHTML = '<input type="text">';
+            row.appendChild(cell);
+            cell = document.createElement('td');
+            cell.innerHTML = '<input type="text">';
+            row.appendChild(cell);
+            cell = document.createElement('td');
+            cell.innerHTML = "<input type='checkbox'>";
+            row.appendChild(cell);
+            table.appendChild(row);
+            count += 1;
+        }
+
+        for(i=0; i<numSkyFrames; i++){
+            row = document.createElement('tr');
+            cell = document.createElement('td');
+            cell.innerHTML = count;
+            row.appendChild(cell);
+            cell = document.createElement('td');
+            cell.innerHTML = '<input type="text">';
+            row.appendChild(cell);
+            cell = document.createElement('td');
+            cell.innerHTML = '<input type="text">';
+            row.appendChild(cell);
+            cell = document.createElement('td');
+            cell.innerHTML = "<input type='checkbox' checked='checked'>";
+            row.appendChild(cell);
+            table.appendChild(row);
+            count += 1;
+        }
+        var submit = document.createElement('button');
+        submit.id = 'submitdefs';
+        submit.innerHTML = 'Submit';
+        userdefs.appendChild(submit);
+    }
+
+    self.update = function (){
         function callback(data){
             console.log("In the callback");
             El('imgResult').src='data:image/png;base64,' + data;
         }
+
+        // Check for disabled boxes
+        var objFrames = El('objFrames');
+        var objLenX = El('objLenX');
+        var objHgtY = El('objHgtY');
+        var nodOffX = El('nodOffX');
+        var nodOffY = El('nodOffY');
+        var skyFrames = El('skyFrames');
+        var skyLenX = El('skyLenX');
+        var skyHgtY = El('skyHgtY');
+
+        if (objLenX.disabled == true) objLenX = 0.0;
+        else objLenX = objLenX.value;
+        if (objHgtY.disabled == true) objHgtY = 0.0;
+        else objHgtY = objHgtY.value;
+        if (nodOffX.disabled == true) nodOffX = 0.0;
+        else nodOffX = nodOffX.value;
+        if (nodOffY.disabled == true) nodOffY = 0.0;
+        else nodOffY = nodOffY.value;
+        if (skyLenX.disabled == true) skyLenX = 0.0;
+        else skyLenX = skyLenX.value;
+        if (skyHgtY.disabled == true) skyHgtY = 0.0;
+        else skyHgtY = skyHgtY.value;
+
         var params = {
             'imgMode':El('imgMode').value,
             'dataset':El('dataset').value,
@@ -290,18 +383,19 @@ function Oopgui(){
             'initOffY':El('initOffY').value,
             'objPattern':El('objPattern').value,
             'objFrames':El('objFrames').value,
-            'objLenX':El('objLenX').value,
-            'objHgtY':El('objHgtY').value,
+            'objLenX':objLenX,
+            'objHgtY':objHgtY,
             'imgFilter':El('imgFilter').value,
             'repeats':El('repeats').value,
             'imgCoadds':El('imgCoadds').value,
             'imgItime':El('imgItime').value,
-            'nodOffX':El('nodOffX').value,
-            'nodOffY':El('nodOffY').value,
+            'nodOffX':nodOffX,
+            'nodOffY':nodOffY,
             'skyPattern':El('skyPattern').value,
             'skyFrames':El('skyFrames').value,
-            'skyLenX':El('skyLenX').value,
-            'skyHgtY':El('skyHgtY').value
+            'skyLenX':skyLenX,
+            'skyHgtY':skyHgtY//,
+            //'userdefs':El('userdefs').value
         };
 
         qry = formatGET(params);
@@ -312,6 +406,6 @@ function Oopgui(){
     El('updateBt').onclick = self.update;
     El('fileList').onclick = self.showFile;
     El('queueList').onclick = self.showQueue;
-    El('echoBt').onclick = self.echo;
+    El('showPosBtn').onclick = self.showPosList;
 
 }

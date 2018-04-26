@@ -8,6 +8,8 @@
         <link rel="stylesheet" type="text/css" href="oopgui.css">
     </head>
 <body onload='Oopgui()'>
+<div id='userdefs'>
+</div>
 <table id='container'>
     <tr class='outer'>
         <th colspan='4' style='font-size: 12pt'>OSIRIS Observation Preplanning GUI</th>
@@ -32,7 +34,9 @@
         </td>
     </tr>
     <tr>
-        <td colspan='4' class='nopads'><img src='grid.PNG' id='imgResult' width='100%'></td>
+        <td colspan='4' class='nopads'>
+            <img src='grid.PNG' id='imgResult' width='100%'>
+        </td>
     </tr>
     <tr class='outer'>
         <td colspan=4>
@@ -276,7 +280,7 @@
                 </tr>
                 <tr class='inner'>
                     <td colspan=4>
-                        <input type='button' id='showPos' value='Show Position List' action='showpos()'>
+                        <button id='showPosBtn'>Show Position List</button>
                     </td>
                 </tr>
             </table>
