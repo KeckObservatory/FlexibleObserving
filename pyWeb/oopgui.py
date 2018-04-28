@@ -207,7 +207,24 @@ class Oopgui:
         )
 
     def add_usr_obj_box(self, x, y):
-        pass
+        return pch.Rectangle(
+            (self.specX+self.initOffX+x,
+            self.specY+self.initOffY+y),
+            self.boxWidth,
+            self.boxHeight,
+            fill = False,
+            linewidth = 3
+        )
+
+    def add_usr_sky_box(self, x, y):
+        return pch.Rectangle(
+            (self.specX+self.initOffX+self.nodOffX+x,
+            self.specY+self.initOffY+self.nodOffY+y),
+            self.boxWidth,
+            self.boxHeight,
+            fill = False,
+            linewidth = 3
+        )
 
     def add_sky_box(self, boxNum):
         return pch.Rectangle(
@@ -402,6 +419,7 @@ class Oopgui:
         pass
 
     def draw_user(self):
+        '''
         for frame in self.defs:
             if self.mode in ['spec','both']:
                 if self.defs[2] == 'false':
@@ -412,7 +430,7 @@ class Oopgui:
                         )
                 if self.defs[2] == 'true':
                     self.ax.add_patch(
-                            self.add_usr_obj_box(
+                            self.add_usr_sky_box(
                                 self.defs[0], self.defs[1]
                             )
                         )
@@ -425,8 +443,36 @@ class Oopgui:
                         )
                 if self.defs[2] == 'true':
                     self.ax.add_patch(
-                            self.add_usr_obj_box(
+                            self.add_usr_sky_diamond(
                                 self.defs[0], self.defs[1]
+                            )
+                        )
+        '''
+        for i in range(0,len(self.defs),3):
+            if self.mode in ['spec','both']:
+                if self.defs[i+2]=="false":
+                    self.ax.add_patch(
+                            self.add_usr_obj_box(
+                                float(self.defs[i]),float(self.defs[i+1])
+                            )
+                        )
+                elif self.defs[i+2]=="true":
+                    self.ax.add_patch(
+                            self.add_usr_sky_box(
+                                float(self.defs[i]),float(self.defs[i+1])
+                            )
+                        )
+            elif self.mode in ['imag','both']:
+                if self.defs[i+2]=="false":
+                    self.ax.add_patch(
+                            self.add_usr_obj_diamond(
+                                self.defs[i],self.defs[i+1]
+                            )
+                        )
+                elif self.defs[i+2]=="true":
+                    self.ax.add_patch(
+                            self.add_usr_sky_diamond(
+                                self.defs[i],self.defs[i+1]
                             )
                         )
 
@@ -460,7 +506,7 @@ class Oopgui:
         self.skyFrame = qstr['skyFrames'][0]
         self.skyLenX = float(qstr['skyLenX'][0])
         self.skyHgtY = float(qstr['skyHgtY'][0])
-        #self.defs = qstr['defs'][0]
+        self.defs = qstr['defs'][0].split(',')
 
         self.gridScale = self.rescale()
         self.print_all()
@@ -495,6 +541,7 @@ class Oopgui:
         print('sframe:',self.skyFrame)
         print('slenx :',self.skyLenX)
         print('shgty :',self.skyHgtY)
+        print('defs  :',self.defs)
         print('xmin  :',self.xMin)
         print('xmax  :',self.xMax)
         print('ymin  :',self.yMin)

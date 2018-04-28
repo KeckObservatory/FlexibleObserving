@@ -1,5 +1,6 @@
 function Oopgui(){
     var self = this;
+    self.userdefs = {};
 
     function El(id) { return document.getElementById(id); }
 
@@ -269,22 +270,23 @@ function Oopgui(){
 
     self.showPosList = function (){
         var userdefs = El('userdefs');
-        var numObjFrames = El('objFrames').value;
-        var numSkyFrames = El('skyFrames').value;
+        var numObjFrames;
+        if (El('objPattern').value=='None') numObjFrames = 0;
+        else numObjFrames = El('objFrames').value;
+        var numSkyFrames;
+        if (El('skyPattern').value=='None') numSkyFrames = 0;
+        else numSkyFrames = El('skyFrames').value;
         var count = 1;
         if (userdefs.style.display == 'none') userdefs.style.display = 'block';
         else userdefs.style.display = 'none';
 
         // Remove any previous nodes
-        while(userdefs.hasChildNodes()){
-            userdefs.removeChild(userdefs.lastChild);
+        var table = El('defs');
+        while(table.hasChildNodes()){
+            table.removeChild(table.lastChild);
         }
 
         // Append new child nodes
-        var table = document.createElement('table');
-        table.id = 'defs';
-        userdefs.appendChild(table);
-        table = El('defs');
         var row = table.insertRow(0);
         var cell = row.insertCell(0);
         cell.innerHTML = '#';
@@ -295,6 +297,7 @@ function Oopgui(){
         cell = row.insertCell(3);
         cell.innerHTML = 'Sky?';
 
+        // Loop through the number of frames and add a row for each one
         for(i=0; i<numObjFrames; i++){
             row = document.createElement('tr');
             cell = document.createElement('td');
@@ -307,7 +310,7 @@ function Oopgui(){
             cell.innerHTML = '<input type="text">';
             row.appendChild(cell);
             cell = document.createElement('td');
-            cell.innerHTML = "<input type='checkbox'>";
+            cell.innerHTML = "<input type='checkbox' unchecked disabled>";
             row.appendChild(cell);
             table.appendChild(row);
             count += 1;
@@ -325,15 +328,29 @@ function Oopgui(){
             cell.innerHTML = '<input type="text">';
             row.appendChild(cell);
             cell = document.createElement('td');
-            cell.innerHTML = "<input type='checkbox' checked='checked'>";
+            cell.innerHTML = "<input type='checkbox' checked disabled>";
             row.appendChild(cell);
             table.appendChild(row);
             count += 1;
         }
-        var submit = document.createElement('button');
-        submit.id = 'submitdefs';
-        submit.innerHTML = 'Submit';
-        userdefs.appendChild(submit);
+    }
+
+    self.storeDefs = function(){
+        var table = El('defs');
+        var t = [];
+        for(var i=1, row; row = table.rows[i]; i++){
+            var r = [];
+            r.push(row.cells[1].lastChild.value);
+            r.push(row.cells[2].lastChild.value);
+            if(row.cells[3].lastChild.checked==true)
+                r.push(true);
+            else r.push(false);
+            t.push(r);
+        }
+
+        self.defs = t;
+        console.log(self.defs);
+        El('userdefs').style.display = 'None';
     }
 
     self.update = function (){
@@ -394,8 +411,8 @@ function Oopgui(){
             'skyPattern':El('skyPattern').value,
             'skyFrames':El('skyFrames').value,
             'skyLenX':skyLenX,
-            'skyHgtY':skyHgtY//,
-            //'userdefs':El('userdefs').value
+            'skyHgtY':skyHgtY,
+            'defs':self.defs
         };
 
         qry = formatGET(params);
@@ -407,5 +424,5 @@ function Oopgui(){
     El('fileList').onclick = self.showFile;
     El('queueList').onclick = self.showQueue;
     El('showPosBtn').onclick = self.showPosList;
-
+    El('submitDefs').onclick = self.storeDefs;
 }
