@@ -99,11 +99,22 @@ class Oopgui:
             elif self.initOffX > 0:
                 minY += self.initOffY
                 maxY += self.initOffY
-            minX -= abs(self.objLenX)
-            maxX += abs(self.objLenX)
-            minY -= abs(self.objHgtY)
-            maxY += abs(self.objHgtY)
-        if self.skyPattern != 'None':
+            if self.objPattern != 'User Defined':
+                minX -= abs(self.objLenX)
+                maxX += abs(self.objLenX)
+                minY -= abs(self.objHgtY)
+                maxY += abs(self.objHgtY)
+            elif self.objPattern == 'User Defined':
+                for i in range(0, len(self.defs), 3):
+                    if float(self.defs[i]) < minX:
+                        minX = float(self.defs[i])
+                    if float(self.defs[i]) > maxX:
+                        maxX = float(self.defs[i])
+                    if float(self.defs[i+1]) < minY:
+                        minY = float(self.defs[i+1])
+                    if float(self.defs[i+1]) > maxY:
+                        maxY = float(self.defs[i+1])
+        if self.skyPattern not in ['None', 'User Defined']:
             if self.initOffX + self.nodOffX - abs(self.skyLenX) < minX:
                 minX = self.initOffX + self.nodOffX - abs(self.skyLenX)
             if self.initOffX + self.nodOffX + abs(self.skyLenX) > maxX:
@@ -112,6 +123,16 @@ class Oopgui:
                 minY = self.initOffY + self.nodOffY - abs(self.skyHgtY)
             if self.initOffY + self.nodOffY + abs(self.skyHgtY) > maxY:
                 maxY = self.initOffY + self.nodOffY + abs(self.skyHgtY)
+        elif self.skyPattern == 'User Defined':
+            for i in range(0, len(self.defs), 3):
+                if self.initOffX + self.nodOffX + float(self.defs[i]) < minX:
+                    minX = self.initOffX + self.nodOffX + float(self.defs[i])
+                if self.initOffX + self.nodOffX + float(self.defs[i]) > maxX:
+                    maxX = self.initOffX + self.nodOffX + float(self.defs[i])
+                if self.initOffY + self.nodOffY + float(self.defs[i+1]) < minY:
+                    minY = self.initOffY + self.nodOffY + float(self.defs[i+1])
+                if self.initOffY + self.nodOffY + float(self.defs[i+1]) > maxY:
+                    maxY = self.initOffY + self.nodOffY + float(self.defs[i+1])
 
         if self.mode == 'spec':
             self.xMin = minX - 1.0
@@ -419,35 +440,6 @@ class Oopgui:
         pass
 
     def draw_user(self):
-        '''
-        for frame in self.defs:
-            if self.mode in ['spec','both']:
-                if self.defs[2] == 'false':
-                    self.ax.add_patch(
-                            self.add_usr_obj_box(
-                                self.defs[0], self.defs[1]
-                            )
-                        )
-                if self.defs[2] == 'true':
-                    self.ax.add_patch(
-                            self.add_usr_sky_box(
-                                self.defs[0], self.defs[1]
-                            )
-                        )
-            if self.mode in ['imag','both']:
-                if self.defs[2] == 'false':
-                    self.ax.add_patch(
-                            self.add_usr_obj_diamond(
-                                self.defs[0], self.defs[1]
-                            )
-                        )
-                if self.defs[2] == 'true':
-                    self.ax.add_patch(
-                            self.add_usr_sky_diamond(
-                                self.defs[0], self.defs[1]
-                            )
-                        )
-        '''
         for i in range(0,len(self.defs),3):
             if self.mode in ['spec','both']:
                 if self.defs[i+2]=="false":
