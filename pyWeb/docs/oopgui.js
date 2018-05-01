@@ -1,6 +1,12 @@
 function Oopgui(){
     var self = this;
     self.userdefs = {};
+    self.offdefs = {
+        Stare:[[0,0]],
+        Box4:[[0,0], [1,0], [1,-1], [0,-1]],
+        Box5:[[0,0],[-1,1],[1,1],[1,-1],[-1,-1]],
+        Box9:[[0,0],[-1,1],[-1,-1],[1,1],[1,-1],[-1,0],[1,0],[0,1],[0,-1]]
+    };
 
     function El(id) { return document.getElementById(id); }
 
@@ -57,6 +63,7 @@ function Oopgui(){
     self.objMode = function () {
         var pattern = El('objPattern');
         if (pattern.value == "None") {
+            self.userdefs = {};
             El('objRaster').style.display = 'none';
             El('objFramesCell').setAttribute("colspan", 3);
             El('objFrames').disabled = true;
@@ -66,6 +73,7 @@ function Oopgui(){
             El('objOffHgtStepY').innerHTML = "None: ";
         }
         else if (pattern.value == "Stare") {
+            self.userdefs = {};
             El('objRaster').style.display = 'none';
             El('objFramesCell').setAttribute("colspan", 3);
             var objFrames = El('objFrames');
@@ -77,6 +85,7 @@ function Oopgui(){
             El('objOffHgtStepY').innerHTML = "Unused: ";
         }
         else if (pattern.value== "Statistical Dither") {
+            self.userdefs = {};
             El('objRaster').style.display = 'none';
             El('objFramesCell').setAttribute("colspan", 3);
             El('objFrames').disabled = false;
@@ -86,6 +95,7 @@ function Oopgui(){
             El('objOffHgtStepY').innerHTML = 'Region Height: ';
         }
         else if (pattern.value == "Raster Scan") {
+            self.userdefs = {};
             El('objFrames').disabled = false;
             El('objLenX').disabled = false;
             El('objHgtY').disabled = false;
@@ -104,6 +114,7 @@ function Oopgui(){
             El('objOffHgtStepY').innerHTML = 'Unused: ';
         }
         else {
+            self.userdefs = {};
             El('objRaster').style.display = 'none';
             El('objFramesCell').setAttribute("colspan", 3);
             var frames = El('objFrames');
@@ -127,6 +138,7 @@ function Oopgui(){
     self.skyMode = function () {
         var pattern = El('skyPattern');
         if (pattern.value == "None") {
+            self.userdefs = {};
             El('nodOffX').disabled = true;
             El('nodOffY').disabled = true;
             El('skyRaster').style.display = 'none';
@@ -138,6 +150,7 @@ function Oopgui(){
             El('skyOffHgtStepY').innerHTML = "None: ";
         }
         else if (pattern.value == "Stare") {
+            self.userdefs = {};
             El('nodOffX').disabled = false;
             El('nodOffY').disabled = false;
             El('skyRaster').style.display = 'none';
@@ -151,6 +164,7 @@ function Oopgui(){
             El('skyOffHgtStepY').innerHTML = "Unused: ";
         }
         else if (pattern.value== "Statistical Dither") {
+            self.userdefs = {};
             El('nodOffX').disabled = false;
             El('nodOffY').disabled = false;
             El('skyFrames').disabled = false;
@@ -162,6 +176,7 @@ function Oopgui(){
             El('skyFramesCell').setAttribute("colspan", 3);
         }
         else if (pattern.value == "Raster Scan") {
+            self.userdefs = {};
             El('nodOffX').disabled = false;
             El('nodOffY').disabled = false;
             El('skyFrames').disabled = false;
@@ -184,6 +199,7 @@ function Oopgui(){
             El('skyFramesCell').setAttribute("colspan", 3);
         }
         else {
+            self.userdefs = {};
             El('nodOffX').disabled = false;
             El('nodOffY').disabled = false;
             var frames = El('skyFrames');
@@ -271,14 +287,24 @@ function Oopgui(){
     self.showPosList = function (){
         var userdefs = El('userdefs');
         var numObjFrames;
-        if (El('objPattern').value=='None') numObjFrames = 0;
+        var objPattern = El('objPattern').value;
+        if (objPattern.value=='None') numObjFrames = 0;
         else numObjFrames = El('objFrames').value;
         var numSkyFrames;
-        if (El('skyPattern').value=='None') numSkyFrames = 0;
+        var skyPattern = El('skyPattern').value;
+        if (skyPattern.value=='None') numSkyFrames = 0;
         else numSkyFrames = El('skyFrames').value;
         var count = 1;
         if (userdefs.style.display == 'none') userdefs.style.display = 'block';
         else userdefs.style.display = 'none';
+        var initOffX = parseFloat(El('initOffX').value);
+        var initOffY = parseFloat(El('initOffY').value);
+        var objLenX = parseFloat(El('objLenX').value);
+        var objHgtY = parseFloat(El('objHgtY').value);
+        var nodOffX = parseFloat(El('nodOffX').value);
+        var nodOffY = parseFloat(El('nodOffY').value);
+        var skyLenX = parseFloat(El('skyLenX').value);
+        var skyHgtY = parseFloat(El('skyHgtY').value);
 
         // Remove any previous nodes
         var table = El('defs');
@@ -304,10 +330,19 @@ function Oopgui(){
             cell.innerHTML = count;
             row.appendChild(cell);
             cell = document.createElement('td');
-            cell.innerHTML = '<input type="text">';
+            var value = 0;
+            if(objPattern!='User Defined'){
+                value = self.offdefs[objPattern][i][0]+initOffX+objLenX;
+                cell.innerHTML = '<input type="text" value='+value+' disabled>';
+            }
+            else cell.innerHTML = '<input type="text">';
             row.appendChild(cell);
             cell = document.createElement('td');
-            cell.innerHTML = '<input type="text">';
+            if(objPattern!='User Defined'){
+                value = self.offdefs[objPattern][i][1]+initOffY+objHgtY;
+                cell.innerHTML = '<input type="text" value='+value+' disabled>';
+            }
+            else cell.innerHTML = '<input type="text">';
             row.appendChild(cell);
             cell = document.createElement('td');
             cell.innerHTML = "<input type='checkbox' unchecked disabled>";
@@ -322,10 +357,19 @@ function Oopgui(){
             cell.innerHTML = count;
             row.appendChild(cell);
             cell = document.createElement('td');
-            cell.innerHTML = '<input type="text">';
+            var value = 0;
+            if(skyPattern!='User Defined'){
+                value = self.offdefs[skyPattern][i][0]+initOffX+nodOffX+skyLenX;
+                cell.innerHTML = '<input type="text" value='+value+' disabled>';
+            }
+            else cell.innerHTML = '<input type="text">';
             row.appendChild(cell);
             cell = document.createElement('td');
-            cell.innerHTML = '<input type="text">';
+            if(skyPattern!='User Defined'){
+                value = self.offdefs[skyPattern][i][1]+initOffY+nodOffY+skyHgtY;
+                cell.innerHTML = '<input type="text" value='+value+' disabled>';
+            }
+            else cell.innerHTML = '<input type="text">';
             row.appendChild(cell);
             cell = document.createElement('td');
             cell.innerHTML = "<input type='checkbox' checked disabled>";
@@ -337,8 +381,21 @@ function Oopgui(){
 
     self.storeDefs = function(){
         var table = El('defs');
+        var objPattern = El('objPattern').value;
+        var skyPattern = El('skyPattern').value;
+        var numrows = parseFloat(El('objFrames').value)
+            + parseFloat(El('skyFrames').value) + 1;
         var t = [];
-        for(var i=1, row; row = table.rows[i]; i++){
+        var i = 1;
+        if(objPattern == "Stare") i+=1;
+        else if (objPattern == "Box4") i+=4;
+        else if (objPattern == "Box5") i+=5;
+        else if (objPattern == "Box9") i+=9;
+        if(skyPattern == "Stare") numrows-=1;
+        else if(skyPattern == "Box4") numrows-=4;
+        else if(skyPattern == "Box5") numrows-=5;
+        else if(skyPattern == "Box9") numrows-=9;
+        for(i; row=table.rows[i]; i++){
             var r = [];
             r.push(row.cells[1].lastChild.value);
             r.push(row.cells[2].lastChild.value);
@@ -346,6 +403,7 @@ function Oopgui(){
                 r.push(true);
             else r.push(false);
             t.push(r);
+            if(i+1==numrows) break;
         }
 
         self.defs = t;
@@ -369,17 +427,17 @@ function Oopgui(){
         var skyLenX = El('skyLenX');
         var skyHgtY = El('skyHgtY');
 
-        if (objLenX.disabled == true) objLenX = 0.0;
+        if (objLenX.disabled == true) objLenX = 1.0;
         else objLenX = objLenX.value;
-        if (objHgtY.disabled == true) objHgtY = 0.0;
+        if (objHgtY.disabled == true) objHgtY = 1.0;
         else objHgtY = objHgtY.value;
         if (nodOffX.disabled == true) nodOffX = 0.0;
         else nodOffX = nodOffX.value;
         if (nodOffY.disabled == true) nodOffY = 0.0;
         else nodOffY = nodOffY.value;
-        if (skyLenX.disabled == true) skyLenX = 0.0;
+        if (skyLenX.disabled == true) skyLenX = 1.0;
         else skyLenX = skyLenX.value;
-        if (skyHgtY.disabled == true) skyHgtY = 0.0;
+        if (skyHgtY.disabled == true) skyHgtY = 1.0;
         else skyHgtY = skyHgtY.value;
 
         var params = {
