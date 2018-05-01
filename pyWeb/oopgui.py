@@ -29,6 +29,7 @@ class Oopgui:
         self.yMin = -16.0
         self.yMax = 16.1
 
+        self.scale = 1.0
         self.specX = -0.16
         self.specY = -0.64
         self.imagX = -14.388
@@ -135,20 +136,20 @@ class Oopgui:
                     maxY = self.initOffY + self.nodOffY + float(self.defs[i+1])
 
         if self.mode == 'spec':
-            self.xMin = minX - 1.0
-            self.xMax = maxX + 1.0
-            self.yMin = minY - 1.0
-            self.yMax = maxY + 1.0
+            self.xMin = minX - 1.0*self.scale
+            self.xMax = maxX + 1.0*self.scale
+            self.yMin = minY - 1.0*self.scale
+            self.yMax = maxY + 1.0*self.scale
         elif self.mode == 'imag':
             self.xMin = minX + self.imagX - 14.3
             self.xMax = maxX + self.imagX + 14.3
             self.yMin = minY + self.imagY - 14.3
             self.yMax = maxY + self.imagY + 14.3
         else: # self.mode == both
-            xMinSpec = minX - 1.0
-            xMaxSpec = maxX + 1.0
-            yMinSpec = minY - 1.0
-            yMaxSpec = maxY + 1.0
+            xMinSpec = minX - 1.0*self.scale
+            xMaxSpec = maxX + 1.0*self.scale
+            yMinSpec = minY - 1.0*self.scale
+            yMaxSpec = maxY + 1.0*self.scale
 
             xMinImag = minX + self.imagX - 14.3
             xMaxImag = maxX + self.imagX + 14.3
@@ -199,7 +200,7 @@ class Oopgui:
         self.ax.add_patch(
             pch.Circle(
                 (0,0),
-                radius=0.025,
+                radius=0.025*self.gridScale,
                 fill=False,
                 color='red'
             )
@@ -208,29 +209,29 @@ class Oopgui:
     def add_ref(self):
         self.ax.add_patch(
             pch.Rectangle(
-                (-0.015,-0.015),
-                0.03,
-                0.03,
+                (-0.015*self.gridScale,-0.015*self.gridScale),
+                0.03*self.gridScale,
+                0.03*self.gridScale,
                 fill=False
             )
         )
 
     def add_obj_box(self, xpos, ypos):
         return pch.Rectangle(
-            (self.specX+self.initOffX+xpos*self.objLenX,
-            self.specY+self.initOffY+ypos*self.objHgtY),
-            self.boxWidth,
-            self.boxHeight,
+            (self.specX*self.scale+self.initOffX+xpos*self.objLenX,
+            self.specY*self.scale+self.initOffY+ypos*self.objHgtY),
+            self.boxWidth*self.scale,
+            self.boxHeight*self.scale,
             fill = False,
             linewidth = 3
         )
 
     def add_sky_box(self, xpos, ypos):
         return pch.Rectangle(
-            (self.specX+self.initOffX+self.nodOffX+xpos*self.skyLenX,
-            self.specY+self.initOffY+self.nodOffY+ypos*self.skyHgtY),
-            self.boxWidth,
-            self.boxHeight,
+            (self.specX*self.scale+self.initOffX+self.nodOffX+xpos*self.skyLenX,
+            self.specY*self.scale+self.initOffY+self.nodOffY+ypos*self.skyHgtY),
+            self.boxWidth*self.scale,
+            self.boxHeight*self.scale,
             fill = False,
             linewidth = 3
         )
@@ -592,7 +593,7 @@ class Oopgui:
         self.aoType = qstr['aoType'][0]
         self.lgsMode = qstr['lgsMode'][0]
         self.specFilter = qstr['specFilter'][0]
-        self.scale = qstr['scale'][0]
+        self.scale = float(qstr['scale'][0])/0.02
         self.specCoadds = qstr['specCoadds'][0]
         self.specItime = qstr['specItime'][0]
         self.initOffX = float(qstr['initOffX'][0])
