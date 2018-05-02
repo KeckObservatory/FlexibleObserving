@@ -52,13 +52,13 @@ class Oopgui:
                 'Raster':{'frames':9,'rows':1,'xstep':1.0, 'ystep':1.0},
                 'User':[]
             }
-        self.filters = [
+        self.imgFilters = [
                 'Opn','Jbb','Hbb','Kbb','Zbb',
                 'Jn1','Jn2','Jn3','Hn1','Hn2',
                 'Hn3','Hn4','Hn5','Kn1','Kn2',
                 'Kn3','Kn4','Kn5','Zn3','Drk'
             ]
-        self.filter = 'Opn'
+        self.imgFilter = 'Opn'
         self.draw = {
                 'None':self.draw_none,
                 'Stare':self.draw_stare,
@@ -136,20 +136,20 @@ class Oopgui:
                     maxY = self.initOffY + self.nodOffY + float(self.defs[i+1])
 
         if self.mode == 'spec':
-            self.xMin = minX - 1.0*self.scale
-            self.xMax = maxX + 1.0*self.scale
-            self.yMin = minY - 1.0*self.scale
-            self.yMax = maxY + 1.0*self.scale
+            self.xMin = minX - 1.0*float(self.scale)/0.04
+            self.xMax = maxX + 1.0*float(self.scale)/0.04
+            self.yMin = minY - 1.0*float(self.scale)/0.04
+            self.yMax = maxY + 1.0*float(self.scale)/0.04
         elif self.mode == 'imag':
             self.xMin = minX + self.imagX - 14.3
             self.xMax = maxX + self.imagX + 14.3
             self.yMin = minY + self.imagY - 14.3
             self.yMax = maxY + self.imagY + 14.3
         else: # self.mode == both
-            xMinSpec = minX - 1.0*self.scale
-            xMaxSpec = maxX + 1.0*self.scale
-            yMinSpec = minY - 1.0*self.scale
-            yMaxSpec = maxY + 1.0*self.scale
+            xMinSpec = minX - 1.0*float(self.scale)/0.04
+            xMaxSpec = maxX + 1.0*float(self.scale)/0.04
+            yMinSpec = minY - 1.0*float(self.scale)/0.04
+            yMaxSpec = maxY + 1.0*float(self.scale)/0.04
 
             xMinImag = minX + self.imagX - 14.3
             xMaxImag = maxX + self.imagX + 14.3
@@ -218,20 +218,20 @@ class Oopgui:
 
     def add_obj_box(self, xpos, ypos):
         return pch.Rectangle(
-            (self.specX*self.scale+self.initOffX+xpos*self.objLenX,
-            self.specY*self.scale+self.initOffY+ypos*self.objHgtY),
-            self.boxWidth*self.scale,
-            self.boxHeight*self.scale,
+            (self.specX+self.initOffX+xpos*self.objLenX,
+            self.specY+self.initOffY+ypos*self.objHgtY),
+            self.boxWidth,
+            self.boxHeight,
             fill = False,
             linewidth = 3
         )
 
     def add_sky_box(self, xpos, ypos):
         return pch.Rectangle(
-            (self.specX*self.scale+self.initOffX+self.nodOffX+xpos*self.skyLenX,
-            self.specY*self.scale+self.initOffY+self.nodOffY+ypos*self.skyHgtY),
-            self.boxWidth*self.scale,
-            self.boxHeight*self.scale,
+            (self.specX+self.initOffX+self.nodOffX+xpos*self.skyLenX,
+            self.specY+self.initOffY+self.nodOffY+ypos*self.skyHgtY),
+            self.boxWidth,
+            self.boxHeight,
             fill = False,
             linewidth = 3
         )
@@ -593,7 +593,7 @@ class Oopgui:
         self.aoType = qstr['aoType'][0]
         self.lgsMode = qstr['lgsMode'][0]
         self.specFilter = qstr['specFilter'][0]
-        self.scale = float(qstr['scale'][0])/0.02
+        self.scale = qstr['scale'][0]
         self.specCoadds = qstr['specCoadds'][0]
         self.specItime = qstr['specItime'][0]
         self.initOffX = float(qstr['initOffX'][0])
@@ -613,6 +613,12 @@ class Oopgui:
         self.skyLenX = float(qstr['skyLenX'][0])
         self.skyHgtY = float(qstr['skyHgtY'][0])
         self.defs = qstr['defs'][0].split(',')
+
+        # Update spec values based on specfilter
+        self.specX = -self.filters[self.specFilter][self.scale][0]/2.0
+        self.specY = -self.filters[self.specFilter][self.scale][1]/2.0
+        self.boxWidth = self.filters[self.specFilter][self.scale][0]
+        self.boxHeight = self.filters[self.specFilter][self.scale][1]
 
         self.gridScale = self.rescale()
         self.print_all()
@@ -688,79 +694,79 @@ def SpecFilters():
     NoSC:    Number of Spectral Channels
     NoCS:    Number of Complete Spectra
     ALG:     Approximate Lenslet Geometry
-    FOV.02:  Field of View in 0.02" Scale
-    FOV.035: Field of View in 0.035" Scale
-    FOV.05:  Field of View in 0.05" Scale
-    FOV.10:  Field of View in 0.10" Scale
+    0.02:    Field of View in 0.02" Scale
+    0.035:   Field of View in 0.035" Scale
+    0.05:    Field of View in 0.05" Scale
+    0.10:    Field of View in 0.10" Scale
     """
     return {
             'Zbb':{'SEL':999,'LEL':1176,'NoSC':1476, 'NoCS':1019,
-                'ALG':(16,64), 'FOV.02':(0.32,1.28), 'FOV.035':(0.56,2.24),
-                'FOV.05':(0.8,3.2), 'FOV.10':(1.6,6.4)},
+                'ALG':(16,64), '0.02':(0.32,1.28), '0.035':(0.56,2.24),
+                '0.05':(0.8,3.2), '0.10':(1.6,6.4)},
             'Jbb':{'SEL':1180,'LEL':1416,'NoSC':1574, 'NoCS':1019,
-                'ALG':(16,64), 'FOV.02':(0.32,1.28), 'FOV.035':(0.56,2.24),
-                'FOV.05':(0.8,3.2), 'FOV.10':(1.6,6.4)},
+                'ALG':(16,64), '0.02':(0.32,1.28), '0.035':(0.56,2.24),
+                '0.05':(0.8,3.2), '0.10':(1.6,6.4)},
             'Hbb':{'SEL':1473,'LEL':1803,'NoSC':1651, 'NoCS':1019,
-                'ALG':(16,64), 'FOV.02':(0.32,1.28), 'FOV.035':(0.56,2.24),
-                'FOV.05':(0.8,3.2), 'FOV.10':(1.6,6.4)},
+                'ALG':(16,64), '0.02':(0.32,1.28), '0.035':(0.56,2.24),
+                '0.05':(0.8,3.2), '0.10':(1.6,6.4)},
             'Kbb':{'SEL':1965,'LEL':2381,'NoSC':1665, 'NoCS':1019,
-                'ALG':(16,64), 'FOV.02':(0.32,1.28), 'FOV.035':(0.56,2.24),
-                'FOV.05':(0.8,3.2), 'FOV.10':(1.6,6.4)},
+                'ALG':(16,64), '0.02':(0.32,1.28), '0.035':(0.56,2.24),
+                '0.05':(0.8,3.2), '0.10':(1.6,6.4)},
             'Kcb':{'SEL':1965,'LEL':2381,'NoSC':1665, 'NoCS':1019,
-                'ALG':(16,64), 'FOV.02':None, 'FOV.035':None,
-                'FOV.05':None, 'FOV.10':(1.6,6.4)},
+                'ALG':(16,64), '0.02':None, '0.035':None,
+                '0.05':None, '0.10':(1.6,6.4)},
             'Zn4':{'SEL':1103,'LEL':1158,'NoSC':459, 'NoCS':2038,
-                'ALG':(32,64), 'FOV.02':(0.64,1.28), 'FOV.035':(1.12,2.24),
-                'FOV.05':(1.6,3.2), 'FOV.10':(3.2,6.4)},
+                'ALG':(32,64), '0.02':(0.64,1.28), '0.035':(1.12,2.24),
+                '0.05':(1.6,3.2), '0.10':(3.2,6.4)},
             'Jn1':{'SEL':1174,'LEL':1232,'NoSC':388, 'NoCS':2038,
-                'ALG':(32,64), 'FOV.02':(0.64,1.28), 'FOV.035':(1.12,2.24),
-                'FOV.05':(1.6,3.2), 'FOV.10':(3.2,6.4)},
+                'ALG':(32,64), '0.02':(0.64,1.28), '0.035':(1.12,2.24),
+                '0.05':(1.6,3.2), '0.10':(3.2,6.4)},
             'Jn2':{'SEL':1228,'LEL':1289,'NoSC':408, 'NoCS':2678,
-                'ALG':(42,64), 'FOV.02':(0.84,1.28), 'FOV.035':(1.47,2.24),
-                'FOV.05':(2.1,3.2), 'FOV.10':(4.2,6.4)},
+                'ALG':(42,64), '0.02':(0.84,1.28), '0.035':(1.47,2.24),
+                '0.05':(2.1,3.2), '0.10':(4.2,6.4)},
             'Jn3':{'SEL':1275,'LEL':1339,'NoSC':428, 'NoCS':3063,
-                'ALG':(48,64), 'FOV.02':(0.96,1.28), 'FOV.035':(1.68,2.24),
-                'FOV.05':(2.4,3.2), 'FOV.10':(4.8,6.4)},
+                'ALG':(48,64), '0.02':(0.96,1.28), '0.035':(1.68,2.24),
+                '0.05':(2.4,3.2), '0.10':(4.8,6.4)},
             'Jn4':{'SEL':1323,'LEL':1389,'NoSC':441, 'NoCS':2678,
-                'ALG':(42,64), 'FOV.02':(0.84,1.28), 'FOV.035':(1.47,2.24),
-                'FOV.05':(2.1,3.2), 'FOV.10':(4.2,6.4)},
+                'ALG':(42,64), '0.02':(0.84,1.28), '0.035':(1.47,2.24),
+                '0.05':(2.1,3.2), '0.10':(4.2,6.4)},
             'Hn1':{'SEL':1466,'LEL':1541,'NoSC':376, 'NoCS':2292,
-                'ALG':(36,64), 'FOV.02':(0.72,1.28), 'FOV.035':(1.26,2.24),
-                'FOV.05':(1.8,3.2), 'FOV.10':(3.6,6.4)},
+                'ALG':(36,64), '0.02':(0.72,1.28), '0.035':(1.26,2.24),
+                '0.05':(1.8,3.2), '0.10':(3.6,6.4)},
             'Hn2':{'SEL':1532,'LEL':1610,'NoSC':391, 'NoCS':2868,
-                'ALG':(45,64), 'FOV.02':(0.90,1.28), 'FOV.035':(1.58,2.24),
-                'FOV.05':(2.25,3.2), 'FOV.10':(4.5,6.4)},
+                'ALG':(45,64), '0.02':(0.90,1.28), '0.035':(1.58,2.24),
+                '0.05':(2.25,3.2), '0.10':(4.5,6.4)},
             'Hn3':{'SEL':1594,'LEL':1676,'NoSC':411, 'NoCS':3063,
-                'ALG':(48,64), 'FOV.02':(0.96,1.28), 'FOV.035':(1.68,2.24),
-                'FOV.05':(2.4,3.2), 'FOV.10':(4.8,6.4)},
+                'ALG':(48,64), '0.02':(0.96,1.28), '0.035':(1.68,2.24),
+                '0.05':(2.4,3.2), '0.10':(4.8,6.4)},
             'Hn4':{'SEL':1652,'LEL':1737,'NoSC':426, 'NoCS':2671,
-                'ALG':(42,64), 'FOV.02':(0.84,1.28), 'FOV.035':(1.47,2.24),
-                'FOV.05':(2.1,3.2), 'FOV.10':(4.2,6.4)},
+                'ALG':(42,64), '0.02':(0.84,1.28), '0.035':(1.47,2.24),
+                '0.05':(2.1,3.2), '0.10':(4.2,6.4)},
             'Hn5':{'SEL':1721,'LEL':1808,'NoSC':436, 'NoCS':2038,
-                'ALG':(32,64), 'FOV.02':(0.64,1.28), 'FOV.035':(1.12,2.24),
-                'FOV.05':(1.6,3.2), 'FOV.10':(3.2,6.4)},
+                'ALG':(32,64), '0.02':(0.64,1.28), '0.035':(1.12,2.24),
+                '0.05':(1.6,3.2), '0.10':(3.2,6.4)},
             'Kn1':{'SEL':1955,'LEL':2055,'NoSC':401, 'NoCS':2292,
-                'ALG':(36,64), 'FOV.02':(0.72,1.28), 'FOV.035':(1.26,2.24),
-                'FOV.05':(1.8,3.2), 'FOV.10':(3.6,6.4)},
+                'ALG':(36,64), '0.02':(0.72,1.28), '0.035':(1.26,2.24),
+                '0.05':(1.8,3.2), '0.10':(3.6,6.4)},
             'Kn2':{'SEL':2036,'LEL':2141,'NoSC':421, 'NoCS':2868,
-                'ALG':(45,64), 'FOV.02':(0.90,1.28), 'FOV.035':(1.58,2.24),
-                'FOV.05':(2.25,3.2), 'FOV.10':(4.5,6.4)},
+                'ALG':(45,64), '0.02':(0.90,1.28), '0.035':(1.58,2.24),
+                '0.05':(2.25,3.2), '0.10':(4.5,6.4)},
             'Kn3':{'SEL':2121,'LEL':2229,'NoSC':433, 'NoCS':3063,
-                'ALG':(48,64), 'FOV.02':(0.96,1.28), 'FOV.035':(1.68,2.24),
-                'FOV.05':(2.4,3.2), 'FOV.10':(4.8,6.4)},
+                'ALG':(48,64), '0.02':(0.96,1.28), '0.035':(1.68,2.24),
+                '0.05':(2.4,3.2), '0.10':(4.8,6.4)},
             'Kc3':{'SEL':2121,'LEL':2229,'NoSC':443, 'NoCS':3063,
-                'ALG':(48,64), 'FOV.02':None, 'FOV.035':None,
-                'FOV.05':None, 'FOV.10':(4.8,6.4)},
+                'ALG':(48,64), '0.02':None, '0.035':None,
+                '0.05':None, '0.10':(4.8,6.4)},
             'Kn4':{'SEL':2208,'LEL':2320,'NoSC':449, 'NoCS':2671,
-                'ALG':(42,64), 'FOV.02':(0.84,1.28), 'FOV.035':(1.47,2.24),
-                'FOV.05':(2.1,3.2), 'FOV.10':(4.2,6.4)},
+                'ALG':(42,64), '0.02':(0.84,1.28), '0.035':(1.47,2.24),
+                '0.05':(2.1,3.2), '0.10':(4.2,6.4)},
             'Kc4':{'SEL':2208,'LEL':2320,'NoSC':449, 'NoCS':2671,
-                'ALG':(42,64), 'FOV.02':None, 'FOV.035':None,
-                'FOV.05':None, 'FOV.10':(4.2,6.4)},
+                'ALG':(42,64), '0.02':None, '0.035':None,
+                '0.05':None, '0.10':(4.2,6.4)},
             'Kn5':{'SEL':2292,'LEL':2408,'NoSC':465, 'NoCS':2038,
-                'ALG':(32,64), 'FOV.02':(0.64,1.28), 'FOV.035':(1.12,2.24),
-                'FOV.05':(1.6,3.2), 'FOV.10':(3.2,6.4)},
+                'ALG':(32,64), '0.02':(0.64,1.28), '0.035':(1.12,2.24),
+                '0.05':(1.6,3.2), '0.10':(3.2,6.4)},
             'Kc5':{'SEL':2292,'LEL':2408,'NoSC':465, 'NoCS':2038,
-                'ALG':(32,64), 'FOV.02':None, 'FOV.035':None,
-                'FOV.05':None, 'FOV.10':(3.2,6.4)},
+                'ALG':(32,64), '0.02':None, '0.035':None,
+                '0.05':None, '0.10':(3.2,6.4)},
         }

@@ -60,6 +60,23 @@ function Oopgui(){
         }
     };
 
+    self.checkFilter = function(){
+        var filter = El('specFilter').value;
+        var scale = El('scale');
+        switch (filter){
+            case 'Kcb':
+            case 'Kc3':
+            case 'Kc4':
+            case 'Kc5':
+                scale.value = '0.10';
+                scale.disabled = true;
+                break;
+            default:
+                scale.disabled = false;
+                break;
+        }
+    }
+
     self.objMode = function () {
         var pattern = El('objPattern');
         if (pattern.value == "None") {
