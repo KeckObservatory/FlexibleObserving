@@ -29,6 +29,41 @@ function Oopgui(){
         }
     }
 
+    function setCookie(key, val, exdays){
+        var d = new Date();
+        d.setTime(d.getTime() + (exdays*24*60*60*1000));
+        var expires = 'expires=' + d.toGMTString();
+        document.cookie = key + '+' + val + ';' + expires + ';path=/';
+    }
+
+    function checkCookie(){
+        var keckid = getKeckID();
+        if (keckid != '') return keckid;
+        else {
+            keckid = prompt("Please enter a keckid:","");
+            if (keckid != '' && keckid != null) {
+                setCookie('keckID', keckid, 1);
+            }
+        }
+        console.log(keckid);
+        return keckid;
+    }
+
+    function getKeckID(){
+        var keckid = 'keckID=';
+        var decodedCookie = decodeURIComponent(document.cookie);
+        var cookies = decodedCookie.split(';');
+        for (var i=0; i < cookies.length; i++){
+            var cookie = cookies[i];
+            while (cookie.charAt(0) == ' '){
+                cookie = cookie.substring(1);
+            }
+            if (cookie.indexOf(keckid) == 0) {
+                return cookie.substring(keckid.length, cookie.length);
+            }
+        }
+    }
+
     self.showFile = function(){
         El("loadfile").classList.toggle("show");
     }
@@ -305,11 +340,11 @@ function Oopgui(){
         var userdefs = El('userdefs');
         var numObjFrames;
         var objPattern = El('objPattern').value;
-        if (objPattern.value=='None') numObjFrames = 0;
+        if (objPattern=='None') numObjFrames = 0;
         else numObjFrames = El('objFrames').value;
         var numSkyFrames;
         var skyPattern = El('skyPattern').value;
-        if (skyPattern.value=='None') numSkyFrames = 0;
+        if (skyPattern=='None') numSkyFrames = 0;
         else numSkyFrames = El('skyFrames').value;
         var count = 1;
         if (userdefs.style.display == 'none') userdefs.style.display = 'block';
@@ -375,7 +410,7 @@ function Oopgui(){
             row.appendChild(cell);
             cell = document.createElement('td');
             var value = 0;
-            if(skyPattern!='User Defined'){
+            if(skyPattern != 'User Defined'){
                 value = self.offdefs[skyPattern][i][0]+initOffX+nodOffX+skyLenX;
                 cell.innerHTML = '<input type="text" value='+value+' disabled>';
             }
@@ -425,15 +460,11 @@ function Oopgui(){
 
         self.defs = t;
         console.log(self.defs);
+        console.log(typeof(self.defs));
         El('userdefs').style.display = 'None';
     }
 
-    self.update = function (){
-        function callback(data){
-            console.log("In the callback");
-            El('imgResult').src='data:image/png;base64,' + data;
-        }
-
+    self.createQstr = function(){
         // Check for disabled boxes
         var objFrames = El('objFrames');
         var objLenX = El('objLenX');
@@ -457,7 +488,10 @@ function Oopgui(){
         if (skyHgtY.disabled == true) skyHgtY = 1.0;
         else skyHgtY = skyHgtY.value;
 
+        if (typeof(self.defs) != typeof({})) self.defs = {};
+
         var params = {
+            'progpi':checkCookie(),
             'imgMode':El('imgMode').value,
             'dataset':El('dataset').value,
             'object':El('object').value,
@@ -489,6 +523,16 @@ function Oopgui(){
             'skyHgtY':skyHgtY,
             'defs':self.defs
         };
+        return params;
+    }
+
+    self.update = function (){
+        function callback(data){
+            console.log("In the callback");
+            El('imgResult').src='data:image/png;base64,' + data;
+        }
+
+        var params = self.createQstr();
 
         qry = formatGET(params);
         El('imgResult').src='drawgui?'+qry;
