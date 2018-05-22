@@ -29,27 +29,28 @@ function Oopgui(){
         }
     }
 
-    function setCookie(key, val, exdays){
+    self.setCookie = function(key, val, exdays){
         var d = new Date();
         d.setTime(d.getTime() + (exdays*24*60*60*1000));
         var expires = 'expires=' + d.toGMTString();
         document.cookie = key + '+' + val + ';' + expires + ';path=/';
     }
 
-    function checkCookie(){
-        var keckid = getKeckID();
-        if (keckid != '') return keckid;
+    self.checkCookie = function(){
+        var keckid = self.getKeckID();
+        console.log(keckid);
+        if (keckid != '' && keckid != undefined) return keckid;
         else {
             keckid = prompt("Please enter a keckid:","");
             if (keckid != '' && keckid != null) {
-                setCookie('keckID', keckid, 1);
+                self.setCookie('keckID', keckid, 1);
             }
         }
         console.log(keckid);
         return keckid;
     }
 
-    function getKeckID(){
+    self.getKeckID = function(){
         var keckid = 'keckID=';
         var decodedCookie = decodeURIComponent(document.cookie);
         var cookies = decodedCookie.split(';');
@@ -491,7 +492,7 @@ function Oopgui(){
         if (typeof(self.defs) != typeof({})) self.defs = {};
 
         var params = {
-            'progpi':checkCookie(),
+            'keckID':self.checkCookie(),
             'imgMode':El('imgMode').value,
             'dataset':El('dataset').value,
             'object':El('object').value,

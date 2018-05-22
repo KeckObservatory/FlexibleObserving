@@ -65,6 +65,17 @@ class TestAppHandler (EasyHTTPHandler):
         buf = imgData.read()
         return self.response(buf, 'image/png')
 
+    def save_to_db(self, req, qstr):
+        self.oop.update(qstr)
+        self.oop.save_to_db()
+        return(json.dumps("File saved to db"), self.PlainTextType)
+
+    def save_to_file(self, req, qstr):
+        self.oop.update(qstr)
+        self.oop.save_to_file()
+        return(json.dumps("File saved to disk"), self.PlainTextType)
+
+
 if __name__ == "__main__":
     import signal
     import os

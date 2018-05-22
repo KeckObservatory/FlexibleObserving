@@ -4,8 +4,93 @@ import matplotlib.ticker as tkr
 import shutil
 import pandas as pd
 import numpy as np
+from pymongo import MongoClient as mc
 
 class Oopgui:
+    """
+    Contains all the values to be used in image generation for
+    the web tool as well as the values to be stored in database
+    and DDF (XML) file for local storage. It can be used in place
+    of the java tool.
+
+    @type fig: matplotlib figure
+    @param fig: stores the canvas on which the figure is drawn
+    @type ax: matplotlib axis
+    @param ax: the current plot axis which is modified to produce
+        the appropriate scale and markings
+    @type mode: string
+    @param mode: which CCD the tool will use (spec, imag, both)
+    @type object: string
+    @param object: name of the object being observed
+    @type objPattern: string
+    @param objPattern: Mode of the dither pattern being used
+        for the object frame
+    @type skyPattern: string
+    @param skyPattern: Mode of the dither pattern being used
+        for the sky frame
+    @type measurement: string
+    @param measurement: Unit the movement of the frame should be
+        measured (arcsec or lenslet)
+    @type aomode: string
+    @param aomode: Type of AO being used (NGS or LGS)
+    @type queueDir: string
+    @param queueDir: Location of queue directory to move DDFs to
+        when they are to be used for observation
+    @type ddfname: string
+    @param ddfname: name of the file
+    @type gridScale: float
+    @param gridScale: Scale at which to place tick marks
+    @type boxWidth: float
+    @param boxWidth: width of the CCD on the screen
+    @type boxHeight: float
+    @param boxHeight: height of the CCD on the screen
+    @type filters: dictionary
+    @param filters: collection of filters and their physical
+        characteristics. See the function for the specifics
+    @type oriX: float
+    @param oriX: x-coordinate of the origin
+    @type oriY: float
+    @param oriY: y-coordinate of the origin
+    @type xMin: float
+    @param xMin: Minimum x-value of the grid
+    @type xMax: float
+    @param xMax: Maximum x-value of the grid
+    @type yMin: float
+    @param yMin: Minimum y-value of the grid
+    @type yMax: float
+    @param yMax: Maximum y-value of the grid
+    @type scale: float
+    @param scale: arcsec-to-lenslet ratio
+    @type specX: float
+    @param specX: spec x-offset for drawing the box on the grid
+    @type specY: float
+    @param specY: spec y-offset for drawing the box on the grid
+    @type imagX: float
+    @param imagX: imager x-offset for the center of the diamond
+    @type imagY: float
+    @param imagY: imager y-offset for the center of the diamond
+    @type initOffX: float
+    @param initOffX: Initial x-offset given by the user
+    @type initOffY: float
+    @param initOffY: Initial y-offset given by the user
+    @type nodOffX: float
+    @param nodOffX: Additional x-offset for sky frames given by user
+    @type nodOffY: float
+    @param nodOffY: Additional y-offset for sky frames given by user
+    @type objLenX: float
+    @param objLenX: X-Distance to move additional frames in the dither
+        pattern as defined by the user. Used for BoxN and Raster Scan
+    @type objHgtY: float
+    @param objHgtY: Y-Distance to move additional frames in the dither
+        pattern as defined by the user. Used for BoxN and Raster Scan
+    @type offDefs: dictionary
+    @param offDefs: Directions to move the frames for BoxN when additional
+        offsets are given by the user.
+    @type draw: dictionary
+    @param draw: collection of the draw functions to be called using
+        the spec and image mode
+    @type 
+    """
     def __init__(self):
         # Initial planning params
         self.mode = 'spec'
@@ -50,7 +135,6 @@ class Oopgui:
                         (-1,0),(1,0),(0,1),(0,-1)],
                 'Dither':{'frames':1, 'length':1.0, 'height':1.0},
                 'Raster':{'frames':9,'rows':1,'xstep':1.0, 'ystep':1.0},
-                'User':[]
             }
         self.imgFilters = [
                 'Opn','Jbb','Hbb','Kbb','Zbb',
@@ -77,16 +161,36 @@ class Oopgui:
     # End __init__()
 
     def set_queue_dir(self, qdir):
+        """
+        Sets the directory of the queue to where
+        the observing tool pulls config files from.
+
+        @type qdir: string
+        @param qdir: absolute directory of the queue folder
+        """
         self.queueDir = qdir
 
     def send_to_queue(self):
+        """
+        Moves the file to the directory set in queueDir
+        """
         pass
 
     def rescale(self):
+        """
+        Looks at the coordinates of the objects being drawn
+        to figure out what the grid tick scale should be.
+        """
+        # Initialize some variables to keep track of the current
+        # min and max x values
         minX = 0
         maxX = 0
         minY = 0
         maxY = 0
+
+        # Look at the object pattern to determine an initial
+        # min and max based off of initOffX and initOffY given
+        # by the user
         if self.objPattern != 'None':
             if self.initOffX < 0:
                 minX -= self.initOffX
@@ -115,6 +219,7 @@ class Oopgui:
                         minY = float(self.defs[i+1])
                     if float(self.defs[i+1]) > maxY:
                         maxY = float(self.defs[i+1])
+        # Check if the skyPattern changes any min or max
         if self.skyPattern not in ['None', 'User Defined']:
             if self.initOffX + self.nodOffX - abs(self.skyLenX) < minX:
                 minX = self.initOffX + self.nodOffX - abs(self.skyLenX)
@@ -135,21 +240,23 @@ class Oopgui:
                 if self.initOffY + self.nodOffY + float(self.defs[i+1]) > maxY:
                     maxY = self.initOffY + self.nodOffY + float(self.defs[i+1])
 
+        # Set the min and max based on the determined value from above
+        # and the scale of the filter selected.
         if self.mode == 'spec':
-            self.xMin = minX - 1.0*float(self.scale)/0.04
-            self.xMax = maxX + 1.0*float(self.scale)/0.04
-            self.yMin = minY - 1.0*float(self.scale)/0.04
-            self.yMax = maxY + 1.0*float(self.scale)/0.04
+            self.xMin = minX - 1.0*float(self.scale)/0.02
+            self.xMax = maxX + 1.0*float(self.scale)/0.02
+            self.yMin = minY - 1.0*float(self.scale)/0.02
+            self.yMax = maxY + 1.0*float(self.scale)/0.02
         elif self.mode == 'imag':
             self.xMin = minX + self.imagX - 14.3
             self.xMax = maxX + self.imagX + 14.3
             self.yMin = minY + self.imagY - 14.3
             self.yMax = maxY + self.imagY + 14.3
         else: # self.mode == both
-            xMinSpec = minX - 1.0*float(self.scale)/0.04
-            xMaxSpec = maxX + 1.0*float(self.scale)/0.04
-            yMinSpec = minY - 1.0*float(self.scale)/0.04
-            yMaxSpec = maxY + 1.0*float(self.scale)/0.04
+            xMinSpec = minX - 1.0*float(self.scale)/0.02
+            xMaxSpec = maxX + 1.0*float(self.scale)/0.02
+            yMinSpec = minY - 1.0*float(self.scale)/0.02
+            yMaxSpec = maxY + 1.0*float(self.scale)/0.02
 
             xMinImag = minX + self.imagX - 14.3
             xMaxImag = maxX + self.imagX + 14.3
@@ -183,6 +290,10 @@ class Oopgui:
         return gridScale
 
     def draw_fig(self):
+        """
+        Draws a figure based on the values set in the object variables
+        """
+        # create a mathplotlib figure that's 8in x 8in
         self.fig = plt.figure(figsize=(8,8))
         self.ax = self.fig.gca()
         self.ax.xaxis.set_major_formatter(tkr.FormatStrFormatter('%10.1f"'))
@@ -197,9 +308,12 @@ class Oopgui:
         self.add_ref()
 
     def add_origin(self):
+        """
+        Creates the circle at the origin of the object frame
+        """
         self.ax.add_patch(
             pch.Circle(
-                (0,0),
+                (self.oriX,self.oriY),
                 radius=0.025*self.gridScale,
                 fill=False,
                 color='red'
@@ -207,6 +321,9 @@ class Oopgui:
         )
 
     def add_ref(self):
+        """
+        Creates a box at the centroid reference
+        """
         self.ax.add_patch(
             pch.Rectangle(
                 (-0.015*self.gridScale,-0.015*self.gridScale),
@@ -217,6 +334,14 @@ class Oopgui:
         )
 
     def add_obj_box(self, xpos, ypos):
+        """
+        Creates an object box around the given x and y positions
+
+        @type xpos: float
+        @param xpos: x position around which to draw the object box
+        @typp ypos: float
+        @param ypos: y position around which to draw the object box
+        """
         return pch.Rectangle(
             (self.specX+self.initOffX+xpos*self.objLenX,
             self.specY+self.initOffY+ypos*self.objHgtY),
@@ -227,6 +352,14 @@ class Oopgui:
         )
 
     def add_sky_box(self, xpos, ypos):
+        """
+        Creates a sky box around the given x and y positions
+
+        @type xpos: float
+        @param xpos: x position around which to draw the sky box
+        @type ypos: float
+        @param ypos: y position around which to draw the sky box
+        """
         return pch.Rectangle(
             (self.specX+self.initOffX+self.nodOffX+xpos*self.skyLenX,
             self.specY+self.initOffY+self.nodOffY+ypos*self.skyHgtY),
@@ -237,6 +370,15 @@ class Oopgui:
         )
 
     def add_obj_diamond(self, xpos, ypos):
+        """
+        Creates an object diamond around the given x and y positions
+
+        @type xpos: float
+        @param xpos: x position around which to draw the object diamond
+        @type ypos: float
+        @param ypos: y position around which to draw the object diamond
+        """
+        # Tilt offset for the image CCD
         xoff = np.cos(np.radians(47.5))
         yoff = np.sin(np.radians(47.5))
         return pch.Polygon(
@@ -265,6 +407,15 @@ class Oopgui:
         )
 
     def add_sky_diamond(self, xpos, ypos):
+        """
+        Creates a sky diamond around the given x and y positions
+
+        @type xpos: float
+        @param xpos: x position around which to draw the sky diamond
+        @type ypos: float
+        @param ypos: y position around which to draw the sky diamond
+        """
+        # Tilt offset for the imager CCD
         xoff = np.cos(np.radians(47.5))
         yoff = np.sin(np.radians(47.5))
         return pch.Polygon(
@@ -293,10 +444,20 @@ class Oopgui:
         )
 
     def draw_none(self):
+        """
+        Placeholder function to prevent problems where one of the
+        dither patterns is 'None'
+        """
         pass
 
     def draw_stare(self):
+        """
+        Draws a stare pattern on the figure depending on the
+        selected mode of the instrument and the stored values
+        """
+        # Check if the mode takes a spec integration
         if self.mode in ['spec','both']:
+            # Check if the object or sky box pattern is Stare
             if self.objPattern == 'Stare':
                 self.ax.add_patch(self.add_obj_box(
                     self.offDefs[self.objPattern][0][0],
@@ -305,7 +466,9 @@ class Oopgui:
                 self.ax.add_patch(self.add_sky_box(
                     self.offDefs[self.skyPattern][0][0],
                     self.offDefs[self.skyPattern][0][1]))
+        # Check if the mode takes an imager integration
         if self.mode in ['imag','both']:
+            # Check if the object or sky diamond pattern is Stare
             if self.objPattern == 'Stare':
                 self.ax.add_patch(self.add_obj_diamond(
                         self.offDefs[self.objPattern][0][0],
@@ -316,7 +479,12 @@ class Oopgui:
                         self.offDefs[self.skyPattern][0][1]))
 
     def draw_box4(self):
+        """
+        Draws a box4 pattern on the figure using the stored values
+        """
+        # Check if the mode takes a spec integration
         if self.mode in ['spec','both']:
+            # check if the object or sky box pattern is Box4
             if self.objPattern == 'Box4':
                 self.ax.add_patch(self.add_obj_box(
                     self.offDefs[self.objPattern][0][0],
@@ -343,7 +511,9 @@ class Oopgui:
                 self.ax.add_patch(self.add_sky_box(
                     self.offDefs[self.skyPattern][3][0],
                     self.offDefs[self.skyPattern][3][1]))
+        # Check if the mode takes an imager integration
         if self.mode in ['imag','both']:
+            # Check if the object or sky diamond pattern is Box4
             if self.objPattern == 'Box4':
                 self.ax.add_patch(self.add_obj_diamond(
                         self.offDefs[self.objPattern][0][0],
@@ -372,7 +542,12 @@ class Oopgui:
                         self.offDefs[self.skyPattern][3][1]))
 
     def draw_box5(self):
+        """
+        Draws a box5 pattern on the figure using the stored values
+        """
+        # Check if the mode takes a spec integration
         if self.mode in ['spec','both']:
+            # Check if the obj or sky box pattern is Box5
             if self.objPattern == 'Box5':
                 self.ax.add_patch(self.add_obj_box(
                     self.offDefs[self.objPattern][0][0],
@@ -405,7 +580,9 @@ class Oopgui:
                 self.ax.add_patch(self.add_sky_box(
                     self.offDefs[self.skyPattern][4][0],
                     self.offDefs[self.skyPattern][4][1]))
+        # Check if the mode takes an imager integration
         if self.mode in ['imag','both']:
+            # Check if the obj or sky diamond pattern is Box5
             if self.objPattern == 'Box5':
                 self.ax.add_patch(self.add_obj_diamond(
                         self.offDefs[self.objPattern][0][0],
@@ -440,7 +617,12 @@ class Oopgui:
                         self.offDefs[self.skyPattern][4][1]))
 
     def draw_box9(self):
+        """
+        Draws a Box9 pattern on the figure using the stored values
+        """
+        # Check if the mode takes a spec integration
         if self.mode in ['spec','both']:
+            # Check if the obj or sky box pattern is Box9
             if self.objPattern == 'Box9':
                 self.ax.add_patch(self.add_obj_box(
                     self.offDefs[self.objPattern][0][0],
@@ -497,7 +679,9 @@ class Oopgui:
                 self.ax.add_patch(self.add_sky_box(
                     self.offDefs[self.skyPattern][8][0],
                     self.offDefs[self.skyPattern][8][1]))
+        # Check if the mode takes an image integration
         if self.mode in ['imag','both']:
+            # Check if the obj or sky diamond pattern is Box9
             if self.objPattern == 'Box9':
                 self.ax.add_patch(self.add_obj_diamond(
                         self.offDefs[self.objPattern][0][0],
@@ -556,33 +740,72 @@ class Oopgui:
                         self.offDefs[self.skyPattern][8][1]))
 
     def draw_stat(self):
+        """
+        To be done in the future... Creates a randomly generated
+        statistical dither pattern based on user input
+        """
         pass
 
     def draw_raster(self):
+        """
+        To be done in the future... Uses an iterative Raster Scan
+        approach to take methodical integrations over the sky
+        """
         pass
 
     def draw_user(self):
+        """
+        Uses user defined values to draw boxes and diamonds on the
+        figure
+        """
+        # Iterate through the definitions provided by
+        # the user in groups of 3
         for i in range(0,len(self.defs),3):
             if self.mode in ['spec','both']:
                 if self.defs[i+2]=="false":
                     self.ax.add_patch(
                             self.add_obj_box(
-                                float(self.defs[i]),float(self.defs[i+1])))
+                                float(self.defs[i]),
+                                float(self.defs[i+1])
+                            )
+                        )
                 elif self.defs[i+2]=="true":
                     self.ax.add_patch(
                             self.add_sky_box(
-                                float(self.defs[i]),float(self.defs[i+1])))
+                                float(self.defs[i]),
+                                float(self.defs[i+1])
+                            )
+                        )
             if self.mode in ['imag','both']:
                 if self.defs[i+2]=="false":
                     self.ax.add_patch(
                             self.add_obj_diamond(
-                                float(self.defs[i]),float(self.defs[i+1])))
+                                float(self.defs[i]),
+                                float(self.defs[i+1])
+                            )
+                        )
                 elif self.defs[i+2]=="true":
                     self.ax.add_patch(
                             self.add_sky_diamond(
-                                float(self.defs[i]),float(self.defs[i+1])))
+                                float(self.defs[i]),
+                                float(self.defs[i+1])
+                            )
+                        )
 
     def update(self, qstr):
+        """
+        Takes the values sent from the webform and stores them in
+        the object then produces a new graphic to be returned to the
+        webpage.
+
+        @type qstr: dictionary
+        @param qstr: Contains the values from the webform to update
+            the oopgui object and then creates a new figure to be
+            returned to the webpage
+        """
+        # Extract the values from the JSON object and store it in
+        # the proper member variables
+        self.keckID = qstr['keckID'][0]
         if qstr['imgMode'][0] == 'Disabled': self.mode = 'spec'
         elif qstr['imgMode'][0] == 'Independent': self.mode = 'imag'
         else: self.mode = 'both'
@@ -615,17 +838,40 @@ class Oopgui:
         self.defs = qstr['defs'][0].split(',')
 
         # Update spec values based on specfilter
-        self.specX = -self.filters[self.specFilter][self.scale][0]/2.0
-        self.specY = -self.filters[self.specFilter][self.scale][1]/2.0
         self.boxWidth = self.filters[self.specFilter][self.scale][0]
         self.boxHeight = self.filters[self.specFilter][self.scale][1]
+        self.specX = -self.filters[self.specFilter][self.scale][0]/2.0
+        self.specY = -self.filters[self.specFilter][self.scale][1]/2.0
+        if self.specFilter == 'Zn4':
+            self.oriX = -self.boxWidth / 4.0
+        elif self.specFilter == 'Jn1':
+            self.oriX = self.boxWidth / 4.0
+        elif self.specFilter == 'Jn2':
+            self.oriX = self.boxWidth / 10.0
+        elif self.specFilter in ['Jn4','Hn4','Kn4','Kc4']:
+            self.oriX = -self.boxWidth / 10.0
+        elif self.specFilter in ['Hn1','Kn1']:
+            self.oriX = self.boxWidth / 6.0
+        elif self.specFilter in ['Hn2','Kn2']:
+            self.oriX = self.boxWidth / 18.0
+        elif self.specFilter == 'Hn5':
+            self.oriX = self.boxWidth / 4.0
+        elif self.specFilter in ['Kn5','Kc5']:
+            self.oriX = -9.0*self.boxWidth / 32.0
+        else:
+            self.oriX = 0.0
 
+        # Rescale the gridScale based on the extracted values
         self.gridScale = self.rescale()
-        self.print_all()
+        #self.print_all()
+        # Redraw the figure based on the extracted values
         self.draw_fig()
+        #self.fig.tight_layout()
+        # Apply the grid for visual scale
         self.ax.grid()
 
     def print_all(self):
+        print('keckID:',self.keckID)
         print('mode  :',self.mode)
         print('fname :',self.dataset)
         print('object:',self.object)
@@ -661,8 +907,14 @@ class Oopgui:
         print('gscale:',self.gridScale)
 
     def obj_dither_out(self):
+        """
+        """
         out = ''.join((' type="', self.objPattern, ' '))
     def save_to_file(self):
+        """
+        Save the current configuration as a DDF (XML) file
+        locally
+        """
         with open(self.ddfname, 'w') as ddf:
             ddf.write('<?xml version="1.0" encoding="UTF-8"?>\n')
             ddf.write('<ddf version="1.0" type="target">\n')
@@ -680,6 +932,22 @@ class Oopgui:
             ddf.write('\t\t<objectDither', self.obj_dither_out(), '/>\n')
             ddf.write()
         print('File saved')
+
+    def save_to_db(self):
+        """
+        Save the current configuration to the database
+        """
+        piID = 
+        client = mc('dev-vm-www1',27017)
+        db = client['osiris']
+        os = db[piID]
+        ins = { 'progname':progname,
+                'semester':semester,
+                'progtitl':progtitl,
+                'submitter':self.keckid
+            }
+        ins.update(qry)
+        os.insert(ins)
 
 def SpecFilters():
     """
