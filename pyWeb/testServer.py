@@ -67,13 +67,18 @@ class TestAppHandler (EasyHTTPHandler):
 
     def save_to_db(self, req, qstr):
         self.oop.update(qstr)
-        self.oop.save_to_db()
-        return(json.dumps("File saved to db"), self.PlainTextType)
+        result = self.oop.save_to_db(qstr)
+        if result == True:
+            return self.response(json.dumps("File saved to db"),
+                    self.PlainTextType)
+        else:
+            return self.response(json.dumps("Error: File not saved to DB"),
+                    self.PlainTextType)
 
     def save_to_file(self, req, qstr):
         self.oop.update(qstr)
         self.oop.save_to_file()
-        return(json.dumps("File saved to disk"), self.PlainTextType)
+        return self.response(json.dumps("File saved to disk"), self.PlainTextType)
 
 
 if __name__ == "__main__":

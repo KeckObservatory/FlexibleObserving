@@ -23,7 +23,8 @@
                 <div id="loadfile" class="dropdown-content">
                     <button onclick="document.getElementById('file-input').click()">Open DDF</button>
                     <input id='file-input' type="file" style="display:none;" />
-                    <button onclick="saveDDF()">Save DDF</button>
+                    <button id="saveBtn">Save DDF</button>
+                    <button id='saveDB'>Save to DB</button>
                     <button onclick="makeCDF()">Create Calibration CDFs</button>
                     <button onclick="clear()">Clear Fields</button>
                 </div>
@@ -85,7 +86,7 @@
                     </td>
                     <td>
                         <div> PA: 
-                            <input type='text' id='pa' class='short'>
+                            <input type='text' id='pa' class='short' value='0.0'>
                         </div>
                     </td>
                 </tr>
@@ -193,9 +194,11 @@
                 <tr class='inner'>
                     <td>Frames:</td>
                     <td id='objFramesCell' colspan=3>
-                        <input type='text' id='objFrames' class='short' value='1' disabled>
+                        <input type='text' id='objFrames1' class='short' value='1' disabled>
                     </td>
-                    <td id='objRaster'>x <input type='text' class='short' value='1'></td>
+                    <td id='objRaster'>
+                        x <input type='text' id='objFrames2' class='short' value='1'>
+                    </td>
                 </tr>
                 <tr class='inner'>
                     <td id='objOffLenStepX'>Unused: </td>
@@ -270,9 +273,11 @@
                 <tr class='inner'>
                     <td>Frames:</td>
                     <td id='skyFramesCell' colspan=3>
-                        <input type='text' id='skyFrames' class='short' value='1' disabled>
+                        <input type='text' id='skyFrames1' class='short' value='1' disabled>
                     </td>
-                    <td id='skyRaster'>x <input type='text' class='short' value='1'></td>
+                    <td id='skyRaster'>
+                        x <input type='text' id='skyFrames2' class='short' value='1'>
+                    </td>
                 </tr>
                 <tr class='inner'>
                     <td id='skyOffLenStepX'>None: </td>

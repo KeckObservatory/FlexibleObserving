@@ -4,7 +4,8 @@ import matplotlib.ticker as tkr
 import shutil
 import pandas as pd
 import numpy as np
-from pymongo import MongoClient as mc
+import urllib.request as url
+import db_conn_mongo as dcm
 
 class Oopgui:
     """
@@ -97,10 +98,11 @@ class Oopgui:
         self.object = 'none'
         self.objPattern = 'Stare'
         self.skyPattern = 'None'
-        self.measurement = 'arcsec'
+        self.units = 'arcsec'
+        self.pa = 0.0
         self.aomode = 'NGS'
         self.queueDir = '~/'
-        self.ddfname = 'test.ddf'
+        self.ddfname = 'webtest.ddf'
         self.gridScale = 4.0 #0.8
         self.boxWidth = 0.32
         self.boxHeight = 1.28
@@ -342,9 +344,15 @@ class Oopgui:
         @typp ypos: float
         @param ypos: y position around which to draw the object box
         """
+        if self.objPattern == 'User Defined':
+            initOffX = 0
+            initOffY = 0
+        else:
+            initOffX = self.initOffX
+            initOffY = self.initOffY
         return pch.Rectangle(
-            (self.specX+self.initOffX+xpos*self.objLenX,
-            self.specY+self.initOffY+ypos*self.objHgtY),
+            (self.specX+initOffX+xpos*self.objLenX,
+            self.specY+initOffY+ypos*self.objHgtY),
             self.boxWidth,
             self.boxHeight,
             fill = False,
@@ -360,9 +368,19 @@ class Oopgui:
         @type ypos: float
         @param ypos: y position around which to draw the sky box
         """
+        if self.skyPattern == 'User Defined':
+            initOffX = 0
+            initOffY = 0
+            nodOffX = 0
+            nodOffY = 0
+        else:
+            initOffX = self.initOffX
+            initOffY = self.initOffY
+            nodOffX = self.nodOffX
+            nodOffY = self.nodOffY
         return pch.Rectangle(
-            (self.specX+self.initOffX+self.nodOffX+xpos*self.skyLenX,
-            self.specY+self.initOffY+self.nodOffY+ypos*self.skyHgtY),
+            (self.specX+initOffX+nodOffX+xpos*self.skyLenX,
+            self.specY+initOffY+nodOffY+ypos*self.skyHgtY),
             self.boxWidth,
             self.boxHeight,
             fill = False,
@@ -381,24 +399,30 @@ class Oopgui:
         # Tilt offset for the image CCD
         xoff = np.cos(np.radians(47.5))
         yoff = np.sin(np.radians(47.5))
+        if self.objPattern == 'User Defined':
+            initOffX = 0
+            initOffY = 0
+        else:
+            initOffX = self.initOffX
+            initOffY = self.initOffY
         return pch.Polygon(
             np.array(
                 [
-                    [self.imagX - 14.3 + self.initOffX
+                    [self.imagX - 14.3 + initOffX
                             + xoff + xpos*self.objLenX,
-                        self.imagY + 0 + self.initOffY
+                        self.imagY + 0 + initOffY
                             - yoff + ypos*self.objHgtY],
-                    [self.imagX + 0 + self.initOffX
+                    [self.imagX + 0 + initOffX
                             - xoff + xpos*self.objLenX,
-                        self.imagY + 14.3 + self.initOffY
+                        self.imagY + 14.3 + initOffY
                             - yoff + ypos*self.objHgtY],
-                    [self.imagX + 14.3 + self.initOffX
+                    [self.imagX + 14.3 + initOffX
                             - xoff + xpos*self.objLenX,
-                        self.imagY + 0 + self.initOffY
+                        self.imagY + 0 + initOffY
                             + yoff + ypos*self.objHgtY],
-                    [self.imagX + 0 + self.initOffX
+                    [self.imagX + 0 + initOffX
                             + xoff + xpos*self.objLenX,
-                        self.imagY -14.3 + self.initOffY
+                        self.imagY -14.3 + initOffY
                             + yoff + ypos*self.objHgtY]
                 ]
             ),
@@ -418,24 +442,34 @@ class Oopgui:
         # Tilt offset for the imager CCD
         xoff = np.cos(np.radians(47.5))
         yoff = np.sin(np.radians(47.5))
+        if self.skyPattern == 'User Defined':
+            initOffX = 0
+            initOffY = 0
+            nodOffX = 0
+            nodOffY = 0
+        else:
+            initOffX = self.initOffX
+            initOffY = self.initOffY
+            nodOffX = self.nodOffX
+            nodOffY = self.nodOffY
         return pch.Polygon(
             np.array(
                 [
-                    [self.imagX -14.3 + self.initOffX
-                        + self.nodOffX + xoff + xpos*self.skyLenX,
-                    self.imagY +0 + self.initOffY + self.nodOffY
+                    [self.imagX -14.3 + initOffX
+                        + nodOffX + xoff + xpos*self.skyLenX,
+                    self.imagY +0 + initOffY + nodOffY
                         - yoff + ypos*self.skyHgtY],
-                    [self.imagX + 0 + self.initOffX
-                        + self.nodOffX - xoff + xpos*self.skyLenX,
-                    self.imagY + 14.3 + self.initOffY + self.nodOffY
+                    [self.imagX + 0 + initOffX
+                        + nodOffX - xoff + xpos*self.skyLenX,
+                    self.imagY + 14.3 + initOffY + nodOffY
                         - yoff + ypos*self.skyHgtY],
-                    [self.imagX + 14.3 + self.initOffX + self.nodOffX
+                    [self.imagX + 14.3 + initOffX + nodOffX
                         - xoff + xpos*self.skyLenX,
-                    self.imagY +0 + self.initOffY + self.nodOffY
+                    self.imagY +0 + initOffY + nodOffY
                         + yoff + ypos*self.skyHgtY],
-                    [self.imagX + 0 + self.initOffX + self.nodOffX
+                    [self.imagX + 0 + initOffX + nodOffX
                         + xoff + xpos*self.skyLenX,
-                    self.imagY - 14.3 + self.initOffY + self.nodOffY
+                    self.imagY - 14.3 + initOffY + nodOffY
                         + yoff + ypos*self.skyHgtY]
                 ]
             ),
@@ -806,13 +840,24 @@ class Oopgui:
         # Extract the values from the JSON object and store it in
         # the proper member variables
         self.keckID = qstr['keckID'][0]
-        if qstr['imgMode'][0] == 'Disabled': self.mode = 'spec'
-        elif qstr['imgMode'][0] == 'Independent': self.mode = 'imag'
-        else: self.mode = 'both'
+        self.imgMode = qstr['imgMode'][0]
+        if self.imgMode == 'Disabled':
+            self.mode = 'spec'
+            self.imgMode = 'Disabled (Spec only)'
+        elif self.imgMode == 'Independent':
+            self.mode = 'imag'
+            self.imgMode = 'Independent (Imager only)'
+        else:
+            self.mode = 'both'
+            if self.imgMode == 'Slave1': self.imgMode = 'Slave 1: Maximum Repeats'
+            elif self.imgMode == 'Slave2': self.imgMode = 'Slave 2: Maximum Itime'
+            elif self.imgMode == 'Slave4': self.imgMode = 'Slave 4: Filter Sets'
         self.dataset = qstr['dataset'][0]
         self.object = qstr['object'][0]
         self.targType = qstr['targType'][0]
         self.coordSys = qstr['coordSys'][0]
+        self.units = qstr['units'][0]
+        self.pa = qstr['pa'][0]
         self.aoType = qstr['aoType'][0]
         self.lgsMode = qstr['lgsMode'][0]
         self.specFilter = qstr['specFilter'][0]
@@ -822,7 +867,8 @@ class Oopgui:
         self.initOffX = float(qstr['initOffX'][0])
         self.initOffY = float(qstr['initOffY'][0])
         self.objPattern = qstr['objPattern'][0]
-        self.objFrames = qstr['objFrames'][0]
+        self.objFrames1 = int(qstr['objFrames1'][0])
+        self.objFrames2 = int(qstr['objFrames2'][0])
         self.objLenX = float(qstr['objLenX'][0])
         self.objHgtY = float(qstr['objHgtY'][0])
         self.imgFilter = qstr['imgFilter'][0]
@@ -832,7 +878,8 @@ class Oopgui:
         self.nodOffX = float(qstr['nodOffX'][0])
         self.nodOffY = float(qstr['nodOffY'][0])
         self.skyPattern = qstr['skyPattern'][0]
-        self.skyFrame = qstr['skyFrames'][0]
+        self.skyFrames1 = int(qstr['skyFrames1'][0])
+        self.skyFrames2 = int(qstr['skyFrames2'][0])
         self.skyLenX = float(qstr['skyLenX'][0])
         self.skyHgtY = float(qstr['skyHgtY'][0])
         self.defs = qstr['defs'][0].split(',')
@@ -886,7 +933,7 @@ class Oopgui:
         print('offX  :',self.initOffX)
         print('offY  :',self.initOffY)
         print('pattrn:',self.objPattern)
-        print('frames:',self.objFrames)
+        print('frames:',self.objFrames1)
         print('oblenx:',self.objLenX)
         print('obhgty:',self.objHgtY)
         print('ifiltr:',self.imgFilter)
@@ -896,7 +943,7 @@ class Oopgui:
         print('nodx  :',self.nodOffX)
         print('nody  :',self.nodOffY)
         print('skypat:',self.skyPattern)
-        print('sframe:',self.skyFrame)
+        print('sframe:',self.skyFrames1)
         print('slenx :',self.skyLenX)
         print('shgty :',self.skyHgtY)
         print('defs  :',self.defs)
@@ -906,10 +953,235 @@ class Oopgui:
         print('ymax  :',self.yMax)
         print('gscale:',self.gridScale)
 
-    def obj_dither_out(self):
+    def dither_out(self):
         """
+
         """
-        out = ''.join((' type="', self.objPattern, ' '))
+        out = ''
+        # Determine the object portion of the dither pattern
+        print('before line1')
+        if 'Stare' == self.objPattern:
+            line1 = ''.join(('\t\t\t<ditherPosition sky="false" xOff="',
+                str(self.initOffX+self.offDefs["Stare"][0][0]*self.objLenX), 
+                '" yOff="',
+                str(self.initOffY+self.offDefs["Stare"][0][1]*self.objHgtY),
+                '" />\n'))
+        elif 'Box4' == self.objPattern:
+            line1 = ''.join(('\t\t\t<ditherPosition sky="false" xOff="',
+                str(self.initOffX+self.offDefs["Box4"][0][0]*self.objLenX),
+                '" yOff="',
+                str(self.initOffY+self.offDefs["Box4"][0][1]*self.objHgtY),
+                '" />\n'))
+            line1 = ''.join((line1, '\t\t\t<ditherPosition sky="false" xOff="',
+                str(self.initOffX+self.offDefs["Box4"][1][0]*self.objLenX),
+                '" yOff="',
+                str(self.initOffY+self.offDefs["Box4"][1][1]*self.objHgtY),
+                '" />\n'))
+            line1 = ''.join((line1, '\t\t\t<ditherPosition sky="false" xOff="',
+                str(self.initOffX+self.offDefs["Box4"][2][0]*self.objLenX),
+                '" yOff="',
+                str(self.initOffY+self.offDefs["Box4"][2][1]*self.objHgtY),
+                '" />\n'))
+            line1 = ''.join((line1, '\t\t\t<ditherPosition sky="false" xOff="',
+                str(self.initOffX+self.offDefs["Box4"][3][0]*self.objLenX),
+                '" yOff="',
+                str(self.initOffY+self.offDefs["Box4"][3][1]*self.objHgtY),
+                '" />\n'))
+        elif 'Box5' == self.objPattern:
+            line1 = ''.join(('\t\t\t<ditherPosition sky="false" xOff="',
+                str(self.initOffX+self.offDefs["Box5"][0][0]*self.objLenX),
+                '" yOff="',
+                str(self.initOffY+self.offDefs["Box5"][0][1]*self.objHgtY),
+                '" />\n'))
+            line1 = ''.join((line1, '\t\t\t<ditherPosition sky="false" xOff="',
+                str(self.initOffX+self.offDefs["Box5"][1][0]*self.objLenX),
+                '" yOff="',
+                str(self.initOffY+self.offDefs["Box5"][1][1]*self.objHgtY),
+                '" />\n'))
+            line1 = ''.join((line1, '\t\t\t<ditherPosition sky="false" xOff="',
+                str(self.initOffX+self.offDefs["Box5"][2][0]*self.objLenX),
+                '" yOff="',
+                str(self.initOffY+self.offDefs["Box5"][2][1]*self.objHgtY),
+                '" />\n'))
+            line1 = ''.join((line1, '\t\t\t<ditherPosition sky="false" xOff="',
+                str(self.initOffX+self.offDefs["Box5"][3][0]*self.objLenX), 
+                '" yOff="',
+                str(self.initOffY+self.offDefs["Box5"][3][1]*self.objHgtY),
+                '" />\n'))
+            line1 = ''.join((line1, '\t\t\t<ditherPosition sky="false" xOff="',
+                str(self.initOffX+self.offDefs["Box5"][4][0]*self.objLenX),
+                '" yOff="',
+                str(self.initOffY+self.offDefs["Box5"][4][1]*self.objHgtY),
+                '" />\n'))
+        elif 'Box9' == self.objPattern:
+            line1 = ''.join(('\t\t\t<ditherPosition sky="false" xOff="',
+                str(self.initOffX+self.offDefs["Box9"][0][0]*self.objLenX),
+                '" yOff="',
+                str(self.initOffY+self.offDefs["Box9"][0][1]*self.objHgtY),
+                '" />\n'))
+            line1 = ''.join((line1, '\t\t\t<ditherPosition sky="false" xOff="',
+                str(self.initOffX+self.offDefs["Box9"][1][0]*self.objLenX),
+                '" yOff="',
+                str(self.initOffY+self.offDefs["Box9"][1][1]*self.objHgtY),
+                '" />\n'))
+            line1 = ''.join((line1, '\t\t\t<ditherPosition sky="false" xOff="',
+                str(self.initOffX+self.offDefs["Box9"][2][0]*self.objLenX),
+                '" yOff="',
+                str(self.initOffY+self.offDefs["Box9"][2][1]*self.objHgtY),
+                '" />\n'))
+            line1 = ''.join((line1, '\t\t\t<ditherPosition sky="false" xOff="',
+                str(self.initOffX+self.offDefs["Box9"][3][0]*self.objLenX),
+                '" yOff="',
+                str(self.initOffY+self.offDefs["Box9"][3][1]*self.objHgtY),
+                '" />\n'))
+            line1 = ''.join((line1, '\t\t\t<ditherPosition sky="false" xOff="',
+                str(self.initOffX+self.offDefs["Box9"][4][0]*self.objLenX),
+                '" yOff="',
+                str(self.initOffY+self.offDefs["Box9"][4][1]*self.objHgtY),
+                '" />\n'))
+            line1 = ''.join((line1, '\t\t\t<ditherPosition sky="false" xOff="',
+                str(self.initOffX+self.offDefs["Box9"][5][0]*self.objLenX),
+                '" yOff="',
+                str(self.initOffY+self.offDefs["Box9"][5][1]*self.objHgtY),
+                '" />\n'))
+            line1 = ''.join((line1, '\t\t\t<ditherPosition sky="false" xOff="',
+                str(self.initOffX+self.offDefs["Box9"][6][0]*self.objLenX),
+                '" yOff="',
+                str(self.initOffY+self.offDefs["Box9"][6][1]*self.objHgtY),
+                '" />\n'))
+            line1 = ''.join((line1, '\t\t\t<ditherPosition sky="false" xOff="',
+                str(self.initOffX+self.offDefs["Box9"][7][0]*self.objLenX),
+                '" yOff="',
+                str(self.initOffY+self.offDefs["Box9"][7][1]*self.objHgtY),
+                '" />\n'))
+            line1 = ''.join((line1, '\t\t\t<ditherPosition sky="false" xOff="',
+                str(self.initOffX+self.offDefs["Box9"][8][0]*self.objLenX),
+                '" yOff="',
+                str(self.initOffY+self.offDefs["Box9"][8][1]*self.objHgtY),
+                '" />\n'))
+        elif 'User Defined' in self.objPattern:
+            line1 = ''
+            for i in range(0, self.objFrames1*3, 3):
+                line1 = ''.join((line1, '\t\t\t<ditherPosition sky="false" xOff="', 
+                        self.defs[i],'" yOff="', self.defs[i+1], '" />\n'))
+        elif 'Raster Scan' == self.objPattern:
+            pass
+        elif 'Statistical Dither' == self.objPattern:
+            pass
+
+        # Determine the sky portion of the dither pattern
+        print('before line2')
+        if 'Stare' == self.skyPattern:
+            line2 = ''.join(('\t\t\t<ditherPosition sky="true" xOff="',
+                str(self.initOffX+self.nodOffX+self.offDefs["Stare"][0][0]*self.skyLenX),
+                '" yOff="',
+                str(self.initOffY+self.nodOffY+self.offDefs["Stare"][0][1]*self.skyHgtY),
+                '" />\n'))
+        elif 'Box4' == self.skyPattern:
+            line2 = ''.join(('\t\t\t<ditherPosition sky="true" xOff="',
+                str(self.initOffX+self.nodOffX+self.offDefs["Box4"][0][0]*self.skyLenX),
+                '" yOff="',
+                str(self.initOffY+self.nodOffY+self.offDefs["Box4"][0][1]*self.skyHgtY),
+                '" />\n'))
+            line2 = ''.join((line2, '\t\t\t<ditherPosition sky="true" xOff="',
+                str(self.initOffX+self.nodOffX+self.offDefs["Box4"][1][0]*self.skyLenX),
+                '" yOff="',
+                str(self.initOffY+self.nodOffY+self.offDefs["Box4"][1][1]*self.skyHgtY),
+                '" />\n'))
+            line2 = ''.join((line2, '\t\t\t<ditherPosition sky="true" xOff="',
+                str(self.initOffX+self.nodOffX+self.offDefs["Box4"][2][0]*self.skyLenX),
+                '" yOff="',
+                str(self.initOffY+self.nodOffY+self.offDefs["Box4"][2][1]*self.skyHgtY),
+                '" />\n'))
+            line2 = ''.join((line2, '\t\t\t<ditherPosition sky="true" xOff="',
+                str(self.initOffX+self.nodOffX+self.offDefs["Box4"][3][0]*self.skyLenX),
+                '" yOff="',
+                str(self.initOffY+self.nodOffY+self.offDefs["Box4"][3][1]*self.skyHgtY),
+                '" />\n'))
+        elif 'Box5' == self.skyPattern:
+            line2 = ''.join(('\t\t\t<ditherPosition sky="true" xOff="',
+                str(self.initOffX+self.nodOffX+self.offDefs["Box5"][0][0]*self.skyLenX),
+                '" yOff="',
+                str(self.initOffY+self.nodOffY+self.offDefs["Box5"][0][1]*self.skyHgtY),
+                '" />\n'))
+            line2 = ''.join((line2, '\t\t\t<ditherPosition sky="true" xOff="',
+                str(self.initOffX+self.nodOffX+self.offDefs["Box5"][1][0]*self.skyLenX),
+                '" yOff="',
+                str(self.initOffY+self.nodOffY+self.offDefs["Box5"][1][1]*self.skyHgtY),
+                '" />\n'))
+            line2 = ''.join((line2, '\t\t\t<ditherPosition sky="true" xOff="',
+                str(self.initOffX+self.nodOffX+self.offDefs["Box5"][2][0]*self.skyLenX),
+                '" yOff="',
+                str(self.initOffY+self.nodOffY+self.offDefs["Box5"][2][1]*self.skyHgtY),
+                '" />\n'))
+            line2 = ''.join((line2, '\t\t\t<ditherPosition sky="true" xOff="',
+                str(self.initOffX+self.nodOffX+self.offDefs["Box5"][3][0]*self.skyLenX),
+                '" yOff="',
+                str(self.initOffY+self.nodOffY+self.offDefs["Box5"][3][1]*self.skyHgtY),
+                '" />\n'))
+            line2 = ''.join((line2, '\t\t\t<ditherPosition sky="true" xOff="',
+                str(self.initOffX+self.nodOffX+self.offDefs["Box5"][4][0]*self.skyLenX),
+                '" yOff="',
+                str(self.initOffY+self.nodOffY+self.offDefs["Box5"][4][1]*self.skyHgtY),
+                '" />\n'))
+        elif 'Box9' == self.skyPattern:
+            line2 = ''.join(('\t\t\t<ditherPosition sky="true" xOff="',
+                str(self.initOffX+self.nodOffX+self.offDefs["Box9"][0][0]*self.skyLenX),
+                '" yOff="',
+                str(self.initOffY+self.nodOffY+self.offDefs["Box9"][0][1]*self.skyHgtY),
+                '" />\n'))
+            line2 = ''.join((line2, '\t\t\t<ditherPosition sky="true" xOff="',
+                str(self.initOffX+self.nodOffX+self.offDefs["Box9"][1][0]*self.skyLenX),
+                '" yOff="',
+                str(self.initOffY+self.nodOffY+self.offDefs["Box9"][1][1]*self.skyHgtY),
+                '" />\n'))
+            line2 = ''.join((line2, '\t\t\t<ditherPosition sky="true" xOff="',
+                str(self.initOffX+self.nodOffX+self.offDefs["Box9"][2][0]*self.skyLenX),
+                '" yOff="',
+                str(self.initOffY+self.nodOffY+self.offDefs["Box9"][2][1]*self.skyHgtY),
+                '" />\n'))
+            line2 = ''.join((line2, '\t\t\t<ditherPosition sky="true" xOff="',
+                str(self.initOffX+self.nodOffX+self.offDefs["Box9"][3][0]*self.skyLenX),
+                '" yOff="',
+                str(self.initOffY+self.nodOffY+self.offDefs["Box9"][3][1]*self.skyHgtY),
+                '" />\n'))
+            line2 = ''.join((line2, '\t\t\t<ditherPosition sky="true" xOff="',
+                str(self.initOffX+self.nodOffX+self.offDefs["Box9"][4][0]*self.skyLenX),
+                '" yOff="',
+                str(self.initOffY+self.nodOffY+self.offDefs["Box9"][4][1]*self.skyHgtY),
+                '" />\n'))
+            line2 = ''.join((line2, '\t\t\t<ditherPosition sky="true" xOff="',
+                str(self.initOffX+self.nodOffX+self.offDefs["Box9"][5][0]*self.skyLenX),
+                '" yOff="',
+                str(self.initOffY+self.nodOffY+self.offDefs["Box9"][5][1]*self.skyHgtY),
+                '" />\n'))
+            line2 = ''.join((line2, '\t\t\t<ditherPosition sky="true" xOff="',
+                str(self.initOffX+self.nodOffX+self.offDefs["Box9"][6][0]*self.skyLenX),
+                '" yOff="',
+                str(self.initOffY+self.nodOffY+self.offDefs["Box9"][6][1]*self.skyHgtY),
+                '" />\n'))
+            line2 = ''.join((line2, '\t\t\t<ditherPosition sky="true" xOff="',
+                str(self.initOffX+self.nodOffX+self.offDefs["Box9"][7][0]*self.skyLenX),
+                '" yOff="',
+                str(self.initOffY+self.nodOffY+self.offDefs["Box9"][7][1]*self.skyHgtY),
+                '" />\n'))
+            line2 = ''.join((line2, '\t\t\t<ditherPosition sky="true" xOff="',
+                str(self.initOffX+self.nodOffX+self.offDefs["Box9"][8][0]*self.skyLenX),
+                '" yOff="',
+                str(self.initOffY+self.nodOffY+self.offDefs["Box9"][8][1]*self.skyHgtY),
+                '" />\n'))
+        elif 'User Defined' in self.skyPattern:
+            line2 = ''
+            for i in range(self.objFrames1*3, (self.objFrames1+self.skyFrames1)*3, 3):
+                line2 = ''.join((line2, '\t\t\t<ditherPosition sky="true" xOff="',
+                        self.defs[i],'" yOff="', self.defs[i+1], '" />\n'))
+        elif 'Raster Scan' == self.skyPattern:
+            pass
+        elif 'Statistical Dither' == self.skyPattern:
+            pass
+        out = ''.join((line1, line2))
+        return out
+
     def save_to_file(self):
         """
         Save the current configuration as a DDF (XML) file
@@ -917,37 +1189,115 @@ class Oopgui:
         """
         with open(self.ddfname, 'w') as ddf:
             ddf.write('<?xml version="1.0" encoding="UTF-8"?>\n')
-            ddf.write('<ddf version="1.0" type="target">\n')
-            ddf.write('\t<dataset name="', self.dataset, '" setnum="0" aomode=',
-                      self.aomode, ' status="', self.status, '">\n')
-            ddf.write('\t\t<object>', self.object,'</object>\n')
-            ddf.write('\t\t<spec filter="', self.filter, '" scale=',
-                      self.scale, '" / lenslet" itime="', self.itime,
-                      '" coadds="', self.coadds,'" />\n')
-            ddf.write('\t\t<imag mode="', self.immode, '">\n')
-            ddf.write('\t\t\t<imagFrame filter="', self.filter, '" itime="',
-                      self.itime, '" coadds="', self.coadds, '" repeats="',
-                      self.repeats, '/>\n')
-            ddf.write('\t\t</imag>\n')
-            ddf.write('\t\t<objectDither', self.obj_dither_out(), '/>\n')
-            ddf.write()
+            ddf.write(''.join(('<ddf version="1.0" type="', self.targType,'">\n')))
+            self.dataset = self.dataset.replace('<','&lt;').replace('>','&gt;')
+            ddf.write(''.join(('\t<dataset name="', self.dataset,
+                    '" setnum="0" aomode="', self.aoType, '" status="Modified">\n')))
+            self.object = self.object.replace('<','&lt;').replace('>','&gt;')
+            ddf.write(''.join(('\t\t<object>', self.object,'</object>\n')))
+            ddf.write(''.join(('\t\t<spec filter="', self.specFilter, '" scale="',
+                    self.scale, '&quot; / lenslet" itime="', self.specItime,
+                    '" coadds="', self.specCoadds,'" />\n')))
+            if 'Disabled' in self.imgMode:
+                ddf.write(''.join(('\t\t<imag mode="', self.imgMode, '" />\n')))
+            else:
+                ddf.write(''.join(('\t\t<imag mode="', self.imgMode, '">\n')))
+                ddf.write(''.join(('\t\t\t<imagFrame filter="', self.imgFilter,
+                        '" itime="', str(self.imgItime),
+                        '" coadds="', str(self.imgCoadds),
+                        '" repeats="', str(self.repeats), '" />\n')))
+                ddf.write('\t\t</imag>\n')
+            ddf.write(''.join(('\t\t<objectDither type="', self.objPattern,'" ',
+                    'frames1="', str(self.objFrames1), '" ',
+                    'frames2="', str(self.objFrames2), '" ',
+                    'param1="', str(self.objLenX), '" ',
+                    'param2="', str(self.objHgtY), '" ',
+                    'xOffset="', str(self.initOffX), '" ',
+                    'yOffset="', str(self.initOffY), '" />\n')))
+            ddf.write(''.join(('\t\t<skyDither type="', self.skyPattern, '" ',
+                    'frames1="', str(self.skyFrames1), '" ',
+                    'frames2="', str(self.skyFrames2), '" ',
+                    'param1="', str(self.skyLenX), '" ',
+                    'param2="', str(self.skyHgtY), '" ',
+                    'nodXOffset="', str(self.nodOffX), '" ',
+                    'nodYOffset="', str(self.nodOffY), '"/>\n')))
+            ddf.write(''.join(('\t\t<ditherPattern coords="', self.coordSys,'" ',
+                    'units="', self.units, '" skyPA="', self.pa,'" >\n')))
+            print('before dither out')
+            ddf.write(self.dither_out())
+            print('after dither out')
+            ddf.write('\t\t</ditherPattern>\n')
+            ddf.write('\t\t<reduction>\n')
+            ddf.write(''.join(('\t\t\t<reductionParameter ',
+                    'name="Spatially Rectify Spectrum" instrument="spec" ',
+                    'doStep="true" filechoice="Use instrument default" />\n')))
+            ddf.write(''.join(('\t\t\t<reductionParameter ',
+                    'name="Divide by Flat Field" instrument="spec" ',
+                    'doStep="true" filechoice="Use instrument default" />\n')))
+            ddf.write(''.join(('\t\t\t<reductionParameter ',
+                    'name="Interpolate 1D" instrument="spec" ',
+                    'doStep="true" filechoice="Use instrument default" />\n')))
+            ddf.write(''.join(('\t\t\t<reductionParameter ',
+                    'name="Wavelength Solution" instrument="spec" ',
+                    'doStep="true" filechoice="Use instrument default" />\n')))
+            ddf.write(''.join(('\t\t\t<reductionParameter ',
+                    'name="Interpolate 3D" instrument="spec" ',
+                    'doStep="true" filechoice="Not Applicable" />\n')))
+            ddf.write(''.join(('\t\t\t<reductionParameter ',
+                    'name="Subtract Sky" instrument="spec" ',
+                    'doStep="true" filechoice="Use instrument default" />\n')))
+            ddf.write(''.join(('\t\t\t<reductionParameter ',
+                    'name="Make Data Cube" instrument="spec" ',
+                    'doStep="true" filechoice="Not Applicable" />\n')))
+            ddf.write(''.join(('\t\t\t<reductionParameter ',
+                    'name="Correct Dispersion" instrument="spec" ',
+                    'doStep="true" filechoice="Use instrument default" />\n')))
+            ddf.write(''.join(('\t\t\t<reductionParameter ',
+                    'name="Correct Telluric Lines" instrument="spec" ',
+                    'doStep="true" filechoice="Use instrument default" />\n')))
+            ddf.write(''.join(('\t\t\t<reductionParameter ',
+                    'name="Correct OH Lines" instrument="spec" ',
+                    'doStep="true" filechoice="Not Applicable" />\n')))
+            ddf.write(''.join(('\t\t\t<reductionParameter ',
+                    'name="Calibrate Flux" instrument="spec" ',
+                    'doStep="true" filechoice="Not Applicable" />\n')))
+            ddf.write(''.join(('\t\t\t<reductionParameter ',
+                    'name="Clean PSF" instrument="spec" doStep="true" ',
+                    'filechoice="Use instrument default" />\n')))
+            ddf.write(''.join(('\t\t\t<reductionParameter ',
+                    'name="Mosaic Dithered Frames" instrument="spec" ',
+                    'doStep="true" filechoice="Not Applicable" />\n')))
+            ddf.write('    </reduction>\n')
+            ddf.write('\t</dataset>\n')
+            ddf.write('</ddf>\n')
         print('File saved')
+        return True
 
-    def save_to_db(self):
+    def save_to_db(self, qry):
         """
         Save the current configuration to the database
         """
-        piID = 
-        client = mc('dev-vm-www1',27017)
-        db = client['osiris']
-        os = db[piID]
-        ins = { 'progname':progname,
-                'semester':semester,
-                'progtitl':progtitl,
+        print(qry)
+        piID = qry['keckID'][0]
+        mc = dcm.db_conn_mongo('osiris')
+        mc.db_connect()
+        mc.db = mc.client[mc.database]
+        mc.col = mc.db[piID]
+        ins = { 'progname':'X123',
+                'semester':'2018A',
+                'progtitl':'My Testing Program',
                 'submitter':self.keckid
             }
         ins.update(qry)
-        os.insert(ins)
+        print(ins)
+        try:
+            mc.col.insert(ins)
+        except:
+            mc.db_close()
+            return False
+        else:
+            mc.db_close()
+            return True
 
 def SpecFilters():
     """

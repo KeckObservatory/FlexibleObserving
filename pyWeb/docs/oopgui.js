@@ -8,7 +8,7 @@ function Oopgui(){
         Box9:[[0,0],[-1,1],[-1,-1],[1,1],[1,-1],[-1,0],[1,0],[0,1],[0,-1]]
     };
 
-    function El(id) { return document.getElementById(id); }
+    function El(id) { return document.getElementById(id); };
 
     function formatGET(vars) {
         var qry = "";
@@ -17,7 +17,7 @@ function Oopgui(){
         }
         qry = qry.slice(0,qry.length-1);
         return qry;
-    }
+    };
 
     function openDDF() {
         var file = e.target.files[0];
@@ -27,14 +27,32 @@ function Oopgui(){
         var reader = new FileReader();
         reader.onload = function(e) {
         }
-    }
+    };
+
+    self.saveDDF = function() {
+        function callback(data){
+            console.log("In the callback");
+        }
+
+        var params = self.createQstr();
+        ajaxCall ('save_to_file', params, callback);
+    };
+
+    self.saveDB = function() {
+        function callback(data){
+            console.log('saved to database');
+        }
+
+        var params = self.createQstr();
+        ajaxCall('save_to_db', params, callback);
+    };
 
     self.setCookie = function(key, val, exdays){
         var d = new Date();
         d.setTime(d.getTime() + (exdays*24*60*60*1000));
         var expires = 'expires=' + d.toGMTString();
         document.cookie = key + '+' + val + ';' + expires + ';path=/';
-    }
+    };
 
     self.checkCookie = function(){
         var keckid = self.getKeckID();
@@ -48,7 +66,7 @@ function Oopgui(){
         }
         console.log(keckid);
         return keckid;
-    }
+    };
 
     self.getKeckID = function(){
         var keckid = 'keckID=';
@@ -63,15 +81,15 @@ function Oopgui(){
                 return cookie.substring(keckid.length, cookie.length);
             }
         }
-    }
+    };
 
     self.showFile = function(){
         El("loadfile").classList.toggle("show");
-    }
+    };
 
     self.showQueue = function(){
         El('queue').classList.toggle('show');
-    }
+    };
 
     window.onclick = function(event) {
         if (!event.target.matches('.dropbtn')) {
@@ -84,7 +102,7 @@ function Oopgui(){
                 }
             }
         }
-    }
+    };
 
     self.enableLGS = function () {
         var aomode = El('aoType');
@@ -111,7 +129,7 @@ function Oopgui(){
                 scale.disabled = false;
                 break;
         }
-    }
+    };
 
     self.objMode = function () {
         var pattern = El('objPattern');
@@ -119,7 +137,7 @@ function Oopgui(){
             self.userdefs = {};
             El('objRaster').style.display = 'none';
             El('objFramesCell').setAttribute("colspan", 3);
-            El('objFrames').disabled = true;
+            El('objFrames1').disabled = true;
             El('objLenX').disabled = true;
             El('objHgtY').disabled = true;
             El('objOffLenStepX').innerHTML = "None: ";
@@ -129,7 +147,7 @@ function Oopgui(){
             self.userdefs = {};
             El('objRaster').style.display = 'none';
             El('objFramesCell').setAttribute("colspan", 3);
-            var objFrames = El('objFrames');
+            var objFrames = El('objFrames1');
             objFrames.disabled = true;
             El('objLenX').disabled = true;
             El('objHgtY').disabled = true;
@@ -141,7 +159,7 @@ function Oopgui(){
             self.userdefs = {};
             El('objRaster').style.display = 'none';
             El('objFramesCell').setAttribute("colspan", 3);
-            El('objFrames').disabled = false;
+            El('objFrames1').disabled = false;
             El('objLenX').disabled = false;
             El('objHgtY').disabled = false;
             El('objOffLenStepX').innerHTML = 'Region Length: ';
@@ -149,7 +167,7 @@ function Oopgui(){
         }
         else if (pattern.value == "Raster Scan") {
             self.userdefs = {};
-            El('objFrames').disabled = false;
+            El('objFrames1').disabled = false;
             El('objLenX').disabled = false;
             El('objHgtY').disabled = false;
             El('objOffLenStepX').innerHTML = 'X Stepsize: ';
@@ -160,7 +178,7 @@ function Oopgui(){
         else if (pattern.value == "User Defined") {
             El('objRaster').style.display = 'none';
             El('objFramesCell').setAttribute("colspan", 3);
-            El('objFrames').disabled = false;
+            El('objFrames1').disabled = false;
             El('objLenX').disabled = true;
             El('objHgtY').disabled = true;
             El('objOffLenStepX').innerHTML = 'Unused: ';
@@ -170,7 +188,7 @@ function Oopgui(){
             self.userdefs = {};
             El('objRaster').style.display = 'none';
             El('objFramesCell').setAttribute("colspan", 3);
-            var frames = El('objFrames');
+            var frames = El('objFrames1');
             frames.disabled = true;
             El('objLenX').disabled = false;
             El('objHgtY').disabled = false;
@@ -196,7 +214,7 @@ function Oopgui(){
             El('nodOffY').disabled = true;
             El('skyRaster').style.display = 'none';
             El('skyFramesCell').setAttribute("colspan", 3);
-            El('skyFrames').disabled = true;
+            El('skyFrames1').disabled = true;
             El('skyLenX').disabled = true;
             El('skyHgtY').disabled = true;
             El('skyOffLenStepX').innerHTML = "None: ";
@@ -208,7 +226,7 @@ function Oopgui(){
             El('nodOffY').disabled = false;
             El('skyRaster').style.display = 'none';
             El('skyFramesCell').setAttribute("colspan", 3);
-            var skyFrames = El('skyFrames');
+            var skyFrames = El('skyFrames1');
             skyFrames.disabled = true;
             El('skyLenX').disabled = true;
             El('skyHgtY').disabled = true;
@@ -220,7 +238,7 @@ function Oopgui(){
             self.userdefs = {};
             El('nodOffX').disabled = false;
             El('nodOffY').disabled = false;
-            El('skyFrames').disabled = false;
+            El('skyFrames1').disabled = false;
             El('skyLenX').disabled = false;
             El('skyHgtY').disabled = false;
             El('skyOffLenStepX').innerHTML = 'Region Length: ';
@@ -232,7 +250,7 @@ function Oopgui(){
             self.userdefs = {};
             El('nodOffX').disabled = false;
             El('nodOffY').disabled = false;
-            El('skyFrames').disabled = false;
+            El('skyFrames1').disabled = false;
             El('skyLenX').disabled = false;
             El('skyHgtY').disabled = false;
             El('skyOffLenStepX').innerHTML = 'X Stepsize: ';
@@ -243,7 +261,7 @@ function Oopgui(){
         else if (pattern.value == "User Defined") {
             El('nodOffX').disabled = false;
             El('nodOffY').disabled = false;
-            El('skyFrames').disabled = false;
+            El('skyFrames1').disabled = false;
             El('skyLenX').disabled = true;
             El('skyHgtY').disabled = true;
             El('skyOffLenStepX').innerHTML = 'Unused: ';
@@ -255,7 +273,7 @@ function Oopgui(){
             self.userdefs = {};
             El('nodOffX').disabled = false;
             El('nodOffY').disabled = false;
-            var frames = El('skyFrames');
+            var frames = El('skyFrames1');
             frames.disabled = true;
             El('skyLenX').disabled = false;
             El('skyHgtY').disabled = false;
@@ -342,11 +360,11 @@ function Oopgui(){
         var numObjFrames;
         var objPattern = El('objPattern').value;
         if (objPattern=='None') numObjFrames = 0;
-        else numObjFrames = El('objFrames').value;
+        else numObjFrames = El('objFrames1').value;
         var numSkyFrames;
         var skyPattern = El('skyPattern').value;
         if (skyPattern=='None') numSkyFrames = 0;
-        else numSkyFrames = El('skyFrames').value;
+        else numSkyFrames = El('skyFrames1').value;
         var count = 1;
         if (userdefs.style.display == 'none') userdefs.style.display = 'block';
         else userdefs.style.display = 'none';
@@ -430,14 +448,14 @@ function Oopgui(){
             table.appendChild(row);
             count += 1;
         }
-    }
+    };
 
     self.storeDefs = function(){
         var table = El('defs');
         var objPattern = El('objPattern').value;
         var skyPattern = El('skyPattern').value;
-        var numrows = parseFloat(El('objFrames').value)
-            + parseFloat(El('skyFrames').value) + 1;
+        var numrows = parseFloat(El('objFrames1').value)
+            + parseFloat(El('skyFrames1').value) + 1;
         var t = [];
         var i = 1;
         if(objPattern == "Stare") i+=1;
@@ -463,16 +481,16 @@ function Oopgui(){
         console.log(self.defs);
         console.log(typeof(self.defs));
         El('userdefs').style.display = 'None';
-    }
+    };
 
     self.createQstr = function(){
         // Check for disabled boxes
-        var objFrames = El('objFrames');
+        var objFrames = El('objFrames1');
         var objLenX = El('objLenX');
         var objHgtY = El('objHgtY');
         var nodOffX = El('nodOffX');
         var nodOffY = El('nodOffY');
-        var skyFrames = El('skyFrames');
+        var skyFrames = El('skyFrames1');
         var skyLenX = El('skyLenX');
         var skyHgtY = El('skyHgtY');
 
@@ -509,7 +527,8 @@ function Oopgui(){
             'initOffX':El('initOffX').value,
             'initOffY':El('initOffY').value,
             'objPattern':El('objPattern').value,
-            'objFrames':El('objFrames').value,
+            'objFrames1':El('objFrames1').value,
+            'objFrames2':El('objFrames2').value,
             'objLenX':objLenX,
             'objHgtY':objHgtY,
             'imgFilter':El('imgFilter').value,
@@ -519,13 +538,14 @@ function Oopgui(){
             'nodOffX':nodOffX,
             'nodOffY':nodOffY,
             'skyPattern':El('skyPattern').value,
-            'skyFrames':El('skyFrames').value,
+            'skyFrames1':El('skyFrames1').value,
+            'skyFrames2':El('skyFrames2').value,
             'skyLenX':skyLenX,
             'skyHgtY':skyHgtY,
             'defs':self.defs
         };
         return params;
-    }
+    };
 
     self.update = function (){
         function callback(data){
@@ -545,4 +565,6 @@ function Oopgui(){
     El('queueList').onclick = self.showQueue;
     El('showPosBtn').onclick = self.showPosList;
     El('submitDefs').onclick = self.storeDefs;
+    El('saveBtn').onclick = self.saveDDF;
+    El('saveDB').onclick = self.saveDB;
 }
