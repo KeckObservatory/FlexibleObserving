@@ -1277,27 +1277,25 @@ class Oopgui:
         """
         Save the current configuration to the database
         """
-        print(qry)
-        piID = qry['keckID'][0]
+
+        piID = ''.join(('pi',qry['keckID'][0]))
         mc = dcm.db_conn_mongo('osiris')
         mc.db_connect()
         mc.db = mc.client[mc.database]
         mc.col = mc.db[piID]
-        ins = { 'progname':'X123',
-                'semester':'2018A',
-                'progtitl':'My Testing Program',
-                'submitter':self.keckid
-            }
-        ins.update(qry)
-        print(ins)
+        for key in qry:
+            qry[key] = qry[key][0]
+        qry['progname']='X123'
+        qry['semester']='2018A'
+        qry['progtitl']='My Testing Program'
         try:
-            mc.col.insert(ins)
+            mc.col.insert(qry)
         except:
-            mc.db_close()
             return False
         else:
-            mc.db_close()
             return True
+        finally:
+            mc.db_close()
 
 def SpecFilters():
     """

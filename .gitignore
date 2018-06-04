@@ -5,3 +5,4 @@ example1*
 test*
 .ipynp_checkpoints*
 .ipynp_checkpoints/*
+db_conn_mongo.py

@@ -1,5 +1,6 @@
 function Oopgui(){
     var self = this;
+    self.keckID = '';
     self.userdefs = {};
     self.offdefs = {
         Stare:[[0,0]],
@@ -56,31 +57,25 @@ function Oopgui(){
 
     self.checkCookie = function(){
         var keckid = self.getKeckID();
-        console.log(keckid);
         if (keckid != '' && keckid != undefined) return keckid;
-        else {
+        else { // Add logic here to log into obs page
             keckid = prompt("Please enter a keckid:","");
             if (keckid != '' && keckid != null) {
-                self.setCookie('keckID', keckid, 1);
+                self.setCookie('keckID', keckid, 10);
             }
         }
-        console.log(keckid);
         return keckid;
     };
 
     self.getKeckID = function(){
-        var keckid = 'keckID=';
-        var decodedCookie = decodeURIComponent(document.cookie);
-        var cookies = decodedCookie.split(';');
+        var allcookies = document.cookie;
+        var cookies = allcookies.split(';');
         for (var i=0; i < cookies.length; i++){
-            var cookie = cookies[i];
-            while (cookie.charAt(0) == ' '){
-                cookie = cookie.substring(1);
-            }
-            if (cookie.indexOf(keckid) == 0) {
-                return cookie.substring(keckid.length, cookie.length);
-            }
+            name = cookies[i].split('+')[0];
+            value = cookies[i].split('+')[1];
+            if (name == 'keckID') return value;
         }
+        return '';
     };
 
     self.showFile = function(){
@@ -479,7 +474,6 @@ function Oopgui(){
 
         self.defs = t;
         console.log(self.defs);
-        console.log(typeof(self.defs));
         El('userdefs').style.display = 'None';
     };
 
@@ -512,8 +506,8 @@ function Oopgui(){
         var params = {
             'keckID':self.checkCookie(),
             'imgMode':El('imgMode').value,
-            'dataset':El('dataset').value,
-            'object':El('object').value,
+            'dataset':escape(El('dataset').value),
+            'object':escape(El('object').value),
             'targType':El('targType').value,
             'coordSys':El('coordSys').value,
             'aoType':El('aoType').value,
@@ -544,6 +538,7 @@ function Oopgui(){
             'skyHgtY':skyHgtY,
             'defs':self.defs
         };
+        console.log(params);
         return params;
     };
 
@@ -555,7 +550,7 @@ function Oopgui(){
 
         var params = self.createQstr();
 
-        qry = formatGET(params);
+        var qry = formatGET(params);
         El('imgResult').src='drawgui?'+qry;
         //ajaxCall ('drawgui', params, callback);
     };
