@@ -72,13 +72,25 @@ class TestAppHandler (EasyHTTPHandler):
             return self.response(json.dumps("File saved to db"),
                     self.PlainTextType)
         else:
-            return self.response(json.dumps("Error: File not saved to DB"),
+            return self.response(json.dumps("Error File not saved to DB"),
                     self.PlainTextType)
 
     def save_to_file(self, req, qstr):
         self.oop.update(qstr)
         self.oop.save_to_file()
-        return self.response(json.dumps("File saved to disk"), self.PlainTextType)
+        return self.response(
+                json.dumps("File saved to disk"),
+                self.PlainTextType
+            )
+
+    def send_to_queue(self, req, qstr):
+        self.oop.update(qstr)
+        self.oop.save_to_file()
+        self.oop.send_to_queue()
+        return self.response(
+                json.dumps("Config moved to queue"),
+                self.PlainTextType
+            )
 
 
 if __name__ == "__main__":

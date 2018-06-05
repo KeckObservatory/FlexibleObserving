@@ -6,6 +6,7 @@ import pandas as pd
 import numpy as np
 import urllib.request as url
 import db_conn_mongo as dcm
+from random import random
 
 class Oopgui:
     """
@@ -107,6 +108,7 @@ class Oopgui:
         self.boxWidth = 0.32
         self.boxHeight = 1.28
         self.filters = SpecFilters()
+        self.colorList = []
 
         # Observing Parameters
         self.oriX = 0.0
@@ -157,10 +159,51 @@ class Oopgui:
             }
 
         # Set up plot graphic
-        self.draw_fig()
-        self.ax.grid()
+        #self.draw_fig()
+        #self.ax.grid()
 
     # End __init__()
+
+    def hsv_to_rgb(self, h, s, v):
+        """
+        Martin Ankerl's hsv to rgb converter
+        from https://martin.ankerl.com/2009/12/09/
+        how-to-create-random-colors-programmatically
+
+        @type  h: double
+        @param h: hue
+        @type  s: double
+        @param s: saturation
+        @type  v: double
+        @param v: value
+        """
+        h_i = int(h*6)
+        f = h*6 - h_i
+        p = v * (1 - s)
+        q = v * (1 - f*s)
+        t = v * (1 - (1 - f) * s)
+        if h_i == 0: rgb = (v, t, p)
+        elif h_i == 1: rgb = (q, v, p)
+        elif h_i == 2: rgb = (p, v, t)
+        elif h_i == 3: rgb = (p, q, v)
+        elif h_i == 4: rgb = (t, p, v)
+        elif h_i == 5: rgb = (v, p, q)
+        return rgb
+
+    def gen_color(self, num):
+        """
+        """
+        PHI = 0.618033988749895
+        s = 0.5
+        v = 0.95
+        h = random()
+        colorList = []
+        for i in range(num):
+            h += PHI
+            h %= 1
+            rgb = self.hsv_to_rgb(h,s,v)
+            colorList.append(rgb)
+        return colorList
 
     def set_queue_dir(self, qdir):
         """
@@ -304,7 +347,9 @@ class Oopgui:
         self.ax.set_yticks(np.arange(self.yMin, self.yMax, self.gridScale))
 
         # Activate the draw function for the correct pattern
+        print('before draw obj patt')
         self.draw[self.objPattern]()
+        print('before draw sky patt')
         self.draw[self.skyPattern]()
         self.add_origin()
         self.add_ref()
@@ -335,7 +380,7 @@ class Oopgui:
             )
         )
 
-    def add_obj_box(self, xpos, ypos):
+    def add_obj_box(self, xpos, ypos, index):
         """
         Creates an object box around the given x and y positions
 
@@ -350,16 +395,18 @@ class Oopgui:
         else:
             initOffX = self.initOffX
             initOffY = self.initOffY
+        print(self.colorList[index])
         return pch.Rectangle(
             (self.specX+initOffX+xpos*self.objLenX,
             self.specY+initOffY+ypos*self.objHgtY),
             self.boxWidth,
             self.boxHeight,
             fill = False,
-            linewidth = 3
+            linewidth = 3,
+            color = self.colorList[index]
         )
 
-    def add_sky_box(self, xpos, ypos):
+    def add_sky_box(self, xpos, ypos, index):
         """
         Creates a sky box around the given x and y positions
 
@@ -384,10 +431,11 @@ class Oopgui:
             self.boxWidth,
             self.boxHeight,
             fill = False,
-            linewidth = 3
+            linewidth = 3,
+            color = self.colorList[index]
         )
 
-    def add_obj_diamond(self, xpos, ypos):
+    def add_obj_diamond(self, xpos, ypos, index):
         """
         Creates an object diamond around the given x and y positions
 
@@ -427,10 +475,11 @@ class Oopgui:
                 ]
             ),
             fill = False,
-            linewidth = 3
+            linewidth = 3,
+            color = self.colorList[index]
         )
 
-    def add_sky_diamond(self, xpos, ypos):
+    def add_sky_diamond(self, xpos, ypos, index):
         """
         Creates a sky diamond around the given x and y positions
 
@@ -474,7 +523,8 @@ class Oopgui:
                 ]
             ),
             fill = False,
-            linewidth = 3
+            linewidth = 3,
+            color = self.colorList[index]
         )
 
     def draw_none(self):
@@ -494,23 +544,27 @@ class Oopgui:
             # Check if the object or sky box pattern is Stare
             if self.objPattern == 'Stare':
                 self.ax.add_patch(self.add_obj_box(
-                    self.offDefs[self.objPattern][0][0],
-                    self.offDefs[self.objPattern][0][1]))
+                        self.offDefs[self.objPattern][0][0],
+                        self.offDefs[self.objPattern][0][1],
+                        0))
             if self.skyPattern == 'Stare':
                 self.ax.add_patch(self.add_sky_box(
-                    self.offDefs[self.skyPattern][0][0],
-                    self.offDefs[self.skyPattern][0][1]))
+                        self.offDefs[self.skyPattern][0][0],
+                        self.offDefs[self.skyPattern][0][1],
+                        self.objFrames1*self.objFrames2+0))
         # Check if the mode takes an imager integration
         if self.mode in ['imag','both']:
             # Check if the object or sky diamond pattern is Stare
             if self.objPattern == 'Stare':
                 self.ax.add_patch(self.add_obj_diamond(
                         self.offDefs[self.objPattern][0][0],
-                        self.offDefs[self.objPattern][0][1]))
+                        self.offDefs[self.objPattern][0][1],
+                        0))
             if self.skyPattern == 'Stare':
                 self.ax.add_patch(self.add_sky_diamond(
                         self.offDefs[self.skyPattern][0][0],
-                        self.offDefs[self.skyPattern][0][1]))
+                        self.offDefs[self.skyPattern][0][1],
+                        self.objFrames1*self.objFrames2+0))
 
     def draw_box4(self):
         """
@@ -520,60 +574,33 @@ class Oopgui:
         if self.mode in ['spec','both']:
             # check if the object or sky box pattern is Box4
             if self.objPattern == 'Box4':
-                self.ax.add_patch(self.add_obj_box(
-                    self.offDefs[self.objPattern][0][0],
-                    self.offDefs[self.objPattern][0][1]))
-                self.ax.add_patch(self.add_obj_box(
-                    self.offDefs[self.objPattern][1][0],
-                    self.offDefs[self.objPattern][1][1]))
-                self.ax.add_patch(self.add_obj_box(
-                    self.offDefs[self.objPattern][2][0],
-                    self.offDefs[self.objPattern][2][1]))
-                self.ax.add_patch(self.add_obj_box(
-                    self.offDefs[self.objPattern][3][0],
-                    self.offDefs[self.objPattern][3][1]))
+                print('in draw b4')
+                for i in range(4):
+                    self.ax.add_patch(self.add_obj_box(
+                            self.offDefs[self.objPattern][i][0],
+                            self.offDefs[self.objPattern][i][1],
+                            i))
             if self.skyPattern == 'Box4':
-                self.ax.add_patch(self.add_sky_box(
-                    self.offDefs[self.skyPattern][0][0],
-                    self.offDefs[self.skyPattern][0][1]))
-                self.ax.add_patch(self.add_sky_box(
-                    self.offDefs[self.skyPattern][1][0],
-                    self.offDefs[self.skyPattern][1][1]))
-                self.ax.add_patch(self.add_sky_box(
-                    self.offDefs[self.skyPattern][2][0],
-                    self.offDefs[self.skyPattern][2][1]))
-                self.ax.add_patch(self.add_sky_box(
-                    self.offDefs[self.skyPattern][3][0],
-                    self.offDefs[self.skyPattern][3][1]))
+                for i in range(4):
+                    self.ax.add_patch(self.add_sky_box(
+                            self.offDefs[self.skyPattern][i][0],
+                            self.offDefs[self.skyPattern][i][1],
+                            self.objFrames1*self.objFrames2+i))
         # Check if the mode takes an imager integration
         if self.mode in ['imag','both']:
             # Check if the object or sky diamond pattern is Box4
             if self.objPattern == 'Box4':
-                self.ax.add_patch(self.add_obj_diamond(
-                        self.offDefs[self.objPattern][0][0],
-                        self.offDefs[self.objPattern][0][1]))
-                self.ax.add_patch(self.add_obj_diamond(
-                        self.offDefs[self.objPattern][1][0],
-                        self.offDefs[self.objPattern][1][1]))
-                self.ax.add_patch(self.add_obj_diamond(
-                        self.offDefs[self.objPattern][2][0],
-                        self.offDefs[self.objPattern][2][1]))
-                self.ax.add_patch(self.add_obj_diamond(
-                        self.offDefs[self.objPattern][3][0],
-                        self.offDefs[self.objPattern][3][1]))
+                for i in range(4):
+                    self.ax.add_patch(self.add_obj_diamond(
+                            self.offDefs[self.objPattern][i][0],
+                            self.offDefs[self.objPattern][i][1],
+                            i))
             if self.skyPattern == 'Box4':
-                self.ax.add_patch(self.add_sky_diamond(
-                        self.offDefs[self.skyPattern][0][0],
-                        self.offDefs[self.skyPattern][0][1]))
-                self.ax.add_patch(self.add_sky_diamond(
-                        self.offDefs[self.skyPattern][1][0],
-                        self.offDefs[self.skyPattern][1][1]))
-                self.ax.add_patch(self.add_sky_diamond(
-                        self.offDefs[self.skyPattern][2][0],
-                        self.offDefs[self.skyPattern][2][1]))
-                self.ax.add_patch(self.add_sky_diamond(
-                        self.offDefs[self.skyPattern][3][0],
-                        self.offDefs[self.skyPattern][3][1]))
+                for i in range(4):
+                    self.ax.add_patch(self.add_sky_diamond(
+                            self.offDefs[self.skyPattern][i][0],
+                            self.offDefs[self.skyPattern][i][1],
+                            self.objFrames1*self.objFrames2+i))
 
     def draw_box5(self):
         """
@@ -583,72 +610,32 @@ class Oopgui:
         if self.mode in ['spec','both']:
             # Check if the obj or sky box pattern is Box5
             if self.objPattern == 'Box5':
-                self.ax.add_patch(self.add_obj_box(
-                    self.offDefs[self.objPattern][0][0],
-                    self.offDefs[self.objPattern][0][1]))
-                self.ax.add_patch(self.add_obj_box(
-                    self.offDefs[self.objPattern][1][0],
-                    self.offDefs[self.objPattern][1][1]))
-                self.ax.add_patch(self.add_obj_box(
-                    self.offDefs[self.objPattern][2][0],
-                    self.offDefs[self.objPattern][2][1]))
-                self.ax.add_patch(self.add_obj_box(
-                    self.offDefs[self.objPattern][3][0],
-                    self.offDefs[self.objPattern][3][1]))
-                self.ax.add_patch(self.add_obj_box(
-                    self.offDefs[self.objPattern][4][0],
-                    self.offDefs[self.objPattern][4][1]))
+                for i in range(5):
+                    self.ax.add_patch(self.add_obj_box(
+                            self.offDefs[self.objPattern][i][0],
+                            self.offDefs[self.objPattern][i][1],
+                            i))
             if self.skyPattern == 'Box5':
-                self.ax.add_patch(self.add_sky_box(
-                    self.offDefs[self.skyPattern][0][0],
-                    self.offDefs[self.skyPattern][0][1]))
-                self.ax.add_patch(self.add_sky_box(
-                    self.offDefs[self.skyPattern][1][0],
-                    self.offDefs[self.skyPattern][1][1]))
-                self.ax.add_patch(self.add_sky_box(
-                    self.offDefs[self.skyPattern][2][0],
-                    self.offDefs[self.skyPattern][2][1]))
-                self.ax.add_patch(self.add_sky_box(
-                    self.offDefs[self.skyPattern][3][0],
-                    self.offDefs[self.skyPattern][3][1]))
-                self.ax.add_patch(self.add_sky_box(
-                    self.offDefs[self.skyPattern][4][0],
-                    self.offDefs[self.skyPattern][4][1]))
+                for i in range(5):
+                    self.ax.add_patch(self.add_sky_box(
+                            self.offDefs[self.skyPattern][i][0],
+                            self.offDefs[self.skyPattern][i][1],
+                            self.objFrames1*self.objFrames2+i))
         # Check if the mode takes an imager integration
         if self.mode in ['imag','both']:
             # Check if the obj or sky diamond pattern is Box5
             if self.objPattern == 'Box5':
-                self.ax.add_patch(self.add_obj_diamond(
-                        self.offDefs[self.objPattern][0][0],
-                        self.offDefs[self.objPattern][0][1]))
-                self.ax.add_patch(self.add_obj_diamond(
-                        self.offDefs[self.objPattern][1][0],
-                        self.offDefs[self.objPattern][1][1]))
-                self.ax.add_patch(self.add_obj_diamond(
-                        self.offDefs[self.objPattern][2][0],
-                        self.offDefs[self.objPattern][2][1]))
-                self.ax.add_patch(self.add_obj_diamond(
-                        self.offDefs[self.objPattern][3][0],
-                        self.offDefs[self.objPattern][3][1]))
-                self.ax.add_patch(self.add_obj_diamond(
-                        self.offDefs[self.objPattern][4][0],
-                        self.offDefs[self.objPattern][4][1]))
+                for i in range(5):
+                    self.ax.add_patch(self.add_obj_diamond(
+                            self.offDefs[self.objPattern][i][0],
+                            self.offDefs[self.objPattern][i][1],
+                            i))
             if self.skyPattern == 'Box5':
-                self.ax.add_patch(self.add_sky_diamond(
-                        self.offDefs[self.skyPattern][0][0],
-                        self.offDefs[self.skyPattern][0][1]))
-                self.ax.add_patch(self.add_sky_diamond(
-                        self.offDefs[self.skyPattern][1][0],
-                        self.offDefs[self.skyPattern][1][1]))
-                self.ax.add_patch(self.add_sky_diamond(
-                        self.offDefs[self.skyPattern][2][0],
-                        self.offDefs[self.skyPattern][2][1]))
-                self.ax.add_patch(self.add_sky_diamond(
-                        self.offDefs[self.skyPattern][3][0],
-                        self.offDefs[self.skyPattern][3][1]))
-                self.ax.add_patch(self.add_sky_diamond(
-                        self.offDefs[self.skyPattern][4][0],
-                        self.offDefs[self.skyPattern][4][1]))
+                for i in range(5):
+                    self.ax.add_patch(self.add_sky_diamond(
+                            self.offDefs[self.skyPattern][i][0],
+                            self.offDefs[self.skyPattern][i][1],
+                            self.objFrames1*self.objFrames2+i))
 
     def draw_box9(self):
         """
@@ -658,120 +645,32 @@ class Oopgui:
         if self.mode in ['spec','both']:
             # Check if the obj or sky box pattern is Box9
             if self.objPattern == 'Box9':
-                self.ax.add_patch(self.add_obj_box(
-                    self.offDefs[self.objPattern][0][0],
-                    self.offDefs[self.objPattern][0][1]))
-                self.ax.add_patch(self.add_obj_box(
-                    self.offDefs[self.objPattern][1][0],
-                    self.offDefs[self.objPattern][1][1]))
-                self.ax.add_patch(self.add_obj_box(
-                    self.offDefs[self.objPattern][2][0],
-                    self.offDefs[self.objPattern][2][1]))
-                self.ax.add_patch(self.add_obj_box(
-                    self.offDefs[self.objPattern][3][0],
-                    self.offDefs[self.objPattern][3][1]))
-                self.ax.add_patch(self.add_obj_box(
-                    self.offDefs[self.objPattern][4][0],
-                    self.offDefs[self.objPattern][4][1]))
-                self.ax.add_patch(self.add_obj_box(
-                    self.offDefs[self.objPattern][5][0],
-                    self.offDefs[self.objPattern][5][1]))
-                self.ax.add_patch(self.add_obj_box(
-                    self.offDefs[self.objPattern][6][0],
-                    self.offDefs[self.objPattern][6][1]))
-                self.ax.add_patch(self.add_obj_box(
-                    self.offDefs[self.objPattern][7][0],
-                    self.offDefs[self.objPattern][7][1]))
-                self.ax.add_patch(self.add_obj_box(
-                    self.offDefs[self.objPattern][8][0],
-                    self.offDefs[self.objPattern][8][1]))
+                for i in range(9):
+                    self.ax.add_patch(self.add_obj_box(
+                            self.offDefs[self.objPattern][i][0],
+                            self.offDefs[self.objPattern][i][1],
+                            i))
             if self.skyPattern == 'Box9':
-                self.ax.add_patch(self.add_sky_box(
-                    self.offDefs[self.skyPattern][0][0],
-                    self.offDefs[self.skyPattern][0][1]))
-                self.ax.add_patch(self.add_sky_box(
-                    self.offDefs[self.skyPattern][1][0],
-                    self.offDefs[self.skyPattern][1][1]))
-                self.ax.add_patch(self.add_sky_box(
-                    self.offDefs[self.skyPattern][2][0],
-                    self.offDefs[self.skyPattern][2][1]))
-                self.ax.add_patch(self.add_sky_box(
-                    self.offDefs[self.skyPattern][3][0],
-                    self.offDefs[self.skyPattern][3][1]))
-                self.ax.add_patch(self.add_sky_box(
-                    self.offDefs[self.skyPattern][4][0],
-                    self.offDefs[self.skyPattern][4][1]))
-                self.ax.add_patch(self.add_sky_box(
-                    self.offDefs[self.skyPattern][5][0],
-                    self.offDefs[self.skyPattern][5][1]))
-                self.ax.add_patch(self.add_sky_box(
-                    self.offDefs[self.skyPattern][6][0],
-                    self.offDefs[self.skyPattern][6][1]))
-                self.ax.add_patch(self.add_sky_box(
-                    self.offDefs[self.skyPattern][7][0],
-                    self.offDefs[self.skyPattern][7][1]))
-                self.ax.add_patch(self.add_sky_box(
-                    self.offDefs[self.skyPattern][8][0],
-                    self.offDefs[self.skyPattern][8][1]))
+                for i in range(9):
+                    self.ax.add_patch(self.add_sky_box(
+                            self.offDefs[self.skyPattern][0][0],
+                            self.offDefs[self.skyPattern][0][1],
+                            self.objFrames1*self.objFrames2+i))
         # Check if the mode takes an image integration
         if self.mode in ['imag','both']:
             # Check if the obj or sky diamond pattern is Box9
             if self.objPattern == 'Box9':
-                self.ax.add_patch(self.add_obj_diamond(
-                        self.offDefs[self.objPattern][0][0],
-                        self.offDefs[self.objPattern][0][1]))
-                self.ax.add_patch(self.add_obj_diamond(
-                        self.offDefs[self.objPattern][1][0],
-                        self.offDefs[self.objPattern][1][1]))
-                self.ax.add_patch(self.add_obj_diamond(
-                        self.offDefs[self.objPattern][2][0],
-                        self.offDefs[self.objPattern][2][1]))
-                self.ax.add_patch(self.add_obj_diamond(
-                        self.offDefs[self.objPattern][3][0],
-                        self.offDefs[self.objPattern][3][1]))
-                self.ax.add_patch(self.add_obj_diamond(
-                        self.offDefs[self.objPattern][4][0],
-                        self.offDefs[self.objPattern][4][1]))
-                self.ax.add_patch(self.add_obj_diamond(
-                        self.offDefs[self.objPattern][5][0],
-                        self.offDefs[self.objPattern][5][1]))
-                self.ax.add_patch(self.add_obj_diamond(
-                        self.offDefs[self.objPattern][6][0],
-                        self.offDefs[self.objPattern][6][1]))
-                self.ax.add_patch(self.add_obj_diamond(
-                        self.offDefs[self.objPattern][7][0],
-                        self.offDefs[self.objPattern][7][1]))
-                self.ax.add_patch(self.add_obj_diamond(
-                        self.offDefs[self.objPattern][8][0],
-                        self.offDefs[self.objPattern][8][1]))
+                for i in range(9):
+                    self.ax.add_patch(self.add_obj_diamond(
+                            self.offDefs[self.objPattern][0][0],
+                            self.offDefs[self.objPattern][0][1],
+                            i))
             if self.skyPattern == 'Box9':
-                self.ax.add_patch(self.add_sky_diamond(
-                        self.offDefs[self.skyPattern][0][0],
-                        self.offDefs[self.skyPattern][0][1]))
-                self.ax.add_patch(self.add_sky_diamond(
-                        self.offDefs[self.skyPattern][1][0],
-                        self.offDefs[self.skyPattern][1][1]))
-                self.ax.add_patch(self.add_sky_diamond(
-                        self.offDefs[self.skyPattern][2][0],
-                        self.offDefs[self.skyPattern][2][1]))
-                self.ax.add_patch(self.add_sky_diamond(
-                        self.offDefs[self.skyPattern][3][0],
-                        self.offDefs[self.skyPattern][3][1]))
-                self.ax.add_patch(self.add_sky_diamond(
-                        self.offDefs[self.skyPattern][4][0],
-                        self.offDefs[self.skyPattern][4][1]))
-                self.ax.add_patch(self.add_sky_diamond(
-                        self.offDefs[self.skyPattern][5][0],
-                        self.offDefs[self.skyPattern][5][1]))
-                self.ax.add_patch(self.add_sky_diamond(
-                        self.offDefs[self.skyPattern][6][0],
-                        self.offDefs[self.skyPattern][6][1]))
-                self.ax.add_patch(self.add_sky_diamond(
-                        self.offDefs[self.skyPattern][7][0],
-                        self.offDefs[self.skyPattern][7][1]))
-                self.ax.add_patch(self.add_sky_diamond(
-                        self.offDefs[self.skyPattern][8][0],
-                        self.offDefs[self.skyPattern][8][1]))
+                for i in range(9):
+                    self.ax.add_patch(self.add_sky_diamond(
+                            self.offDefs[self.skyPattern][0][0],
+                            self.offDefs[self.skyPattern][0][1],
+                            self.objFrames1*self.objFrames2+i))
 
     def draw_stat(self):
         """
@@ -800,14 +699,16 @@ class Oopgui:
                     self.ax.add_patch(
                             self.add_obj_box(
                                 float(self.defs[i]),
-                                float(self.defs[i+1])
+                                float(self.defs[i+1]),
+                                int(i/3)
                             )
                         )
                 elif self.defs[i+2]=="true":
                     self.ax.add_patch(
                             self.add_sky_box(
                                 float(self.defs[i]),
-                                float(self.defs[i+1])
+                                float(self.defs[i+1]),
+                                self.objFrames1*self.objFrames2+int(i/3)
                             )
                         )
             if self.mode in ['imag','both']:
@@ -815,14 +716,16 @@ class Oopgui:
                     self.ax.add_patch(
                             self.add_obj_diamond(
                                 float(self.defs[i]),
-                                float(self.defs[i+1])
+                                float(self.defs[i+1]),
+                                int(i/3)
                             )
                         )
                 elif self.defs[i+2]=="true":
                     self.ax.add_patch(
                             self.add_sky_diamond(
                                 float(self.defs[i]),
-                                float(self.defs[i+1])
+                                float(self.defs[i+1]),
+                                self.objFrames1*self.objFrames2+int(i/3)
                             )
                         )
 
@@ -884,6 +787,11 @@ class Oopgui:
         self.skyHgtY = float(qstr['skyHgtY'][0])
         self.defs = qstr['defs'][0].split(',')
 
+        # Generate a color list based on the number of frames
+        numFrames = self.objFrames1*self.objFrames2+self.skyFrames1*self.skyFrames2
+        self.colorList = self.gen_color(numFrames)
+        print("after gen_color")
+
         # Update spec values based on specfilter
         self.boxWidth = self.filters[self.specFilter][self.scale][0]
         self.boxHeight = self.filters[self.specFilter][self.scale][1]
@@ -912,7 +820,9 @@ class Oopgui:
         self.gridScale = self.rescale()
         #self.print_all()
         # Redraw the figure based on the extracted values
+        print("before draw_fig")
         self.draw_fig()
+        print("after draw_fig")
         #self.fig.tight_layout()
         # Apply the grid for visual scale
         self.ax.grid()
