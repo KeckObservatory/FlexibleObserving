@@ -108,7 +108,7 @@ class Oopgui:
         self.boxWidth = 0.32
         self.boxHeight = 1.28
         self.filters = SpecFilters()
-        self.colorList = []
+        self.colorList = self.gen_color(1)
 
         # Observing Parameters
         self.oriX = 0.0
@@ -159,8 +159,8 @@ class Oopgui:
             }
 
         # Set up plot graphic
-        #self.draw_fig()
-        #self.ax.grid()
+        self.draw_fig()
+        self.ax.grid()
 
     # End __init__()
 
@@ -192,6 +192,7 @@ class Oopgui:
 
     def gen_color(self, num):
         """
+        Martin Ankerl's color generator based on Phi distributions
         """
         PHI = 0.618033988749895
         s = 0.5
@@ -347,9 +348,7 @@ class Oopgui:
         self.ax.set_yticks(np.arange(self.yMin, self.yMax, self.gridScale))
 
         # Activate the draw function for the correct pattern
-        print('before draw obj patt')
         self.draw[self.objPattern]()
-        print('before draw sky patt')
         self.draw[self.skyPattern]()
         self.add_origin()
         self.add_ref()
@@ -395,7 +394,6 @@ class Oopgui:
         else:
             initOffX = self.initOffX
             initOffY = self.initOffY
-        print(self.colorList[index])
         return pch.Rectangle(
             (self.specX+initOffX+xpos*self.objLenX,
             self.specY+initOffY+ypos*self.objHgtY),
@@ -574,7 +572,6 @@ class Oopgui:
         if self.mode in ['spec','both']:
             # check if the object or sky box pattern is Box4
             if self.objPattern == 'Box4':
-                print('in draw b4')
                 for i in range(4):
                     self.ax.add_patch(self.add_obj_box(
                             self.offDefs[self.objPattern][i][0],
@@ -790,7 +787,6 @@ class Oopgui:
         # Generate a color list based on the number of frames
         numFrames = self.objFrames1*self.objFrames2+self.skyFrames1*self.skyFrames2
         self.colorList = self.gen_color(numFrames)
-        print("after gen_color")
 
         # Update spec values based on specfilter
         self.boxWidth = self.filters[self.specFilter][self.scale][0]
@@ -820,9 +816,7 @@ class Oopgui:
         self.gridScale = self.rescale()
         #self.print_all()
         # Redraw the figure based on the extracted values
-        print("before draw_fig")
         self.draw_fig()
-        print("after draw_fig")
         #self.fig.tight_layout()
         # Apply the grid for visual scale
         self.ax.grid()
@@ -869,7 +863,6 @@ class Oopgui:
         """
         out = ''
         # Determine the object portion of the dither pattern
-        print('before line1')
         if 'Stare' == self.objPattern:
             line1 = ''.join(('\t\t\t<ditherPosition sky="false" xOff="',
                 str(self.initOffX+self.offDefs["Stare"][0][0]*self.objLenX), 
@@ -980,7 +973,6 @@ class Oopgui:
             pass
 
         # Determine the sky portion of the dither pattern
-        print('before line2')
         if 'Stare' == self.skyPattern:
             line2 = ''.join(('\t\t\t<ditherPosition sky="true" xOff="',
                 str(self.initOffX+self.nodOffX+self.offDefs["Stare"][0][0]*self.skyLenX),
@@ -1133,9 +1125,7 @@ class Oopgui:
                     'nodYOffset="', str(self.nodOffY), '"/>\n')))
             ddf.write(''.join(('\t\t<ditherPattern coords="', self.coordSys,'" ',
                     'units="', self.units, '" skyPA="', self.pa,'" >\n')))
-            print('before dither out')
             ddf.write(self.dither_out())
-            print('after dither out')
             ddf.write('\t\t</ditherPattern>\n')
             ddf.write('\t\t<reduction>\n')
             ddf.write(''.join(('\t\t\t<reductionParameter ',
