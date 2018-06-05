@@ -1,0 +1,303 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>OSIRIS Observation Preplanning GUI</title>
+        <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+        <script src='ajax.js'></script>
+        <script src='oopgui.js'></script>
+        <link rel="stylesheet" type="text/css" href="oopgui.css">
+    </head>
+<body onload='Oopgui()'>
+<div id='userdefs'>
+    <table id='defs'></table>
+    <button id='submitDefs'>Submit</button>
+</div>
+<table id='container'>
+    <tr class='outer'>
+        <th colspan='4' style='font-size: 12pt'>OSIRIS Observation Preplanning GUI</th>
+    </tr>
+    <tr class='outer'>
+        <td colspan=4>
+            <div class="dropdown">
+            <button id=fileList class="dropbtn">File</button>
+                <div id="loadfile" class="dropdown-content">
+                    <button onclick="document.getElementById('file-input').click()">Open DDF</button>
+                    <input id='file-input' type="file" style="display:none;" />
+                    <button id="saveBtn">Save DDF</button>
+                    <button id='saveDB'>Save to DB</button>
+                    <button onclick="makeCDF()">Create Calibration CDFs</button>
+                    <button onclick="clear()">Clear Fields</button>
+                </div>
+            <button id=queueList class=dropbtn>Queue</button>
+                <div id="queue" class="dropdown-content">
+                    <button onclick="setQueue()">Set Queue Directory</button>
+                    <button onclick="sendQueue()">Send to Queue</button>
+                </div>
+            </div>
+        </td>
+    </tr>
+    <tr>
+        <td colspan='4' class='nopads'>
+            <img src='grid.PNG' id='imgResult' width='100%'>
+        </td>
+    </tr>
+    <tr class='outer'>
+        <td colspan=4>
+            <table>
+                <tr class=outer style='text-align: center'>
+                    <td colspan='2' id='spec'>Show Spec Only</td>
+                    <td colspan='1' id='imag'>Show Imager Only</td>
+                    <td colspan='1' id='both'>Show Spec and Imager</td>
+                </tr>
+            </table>
+        </td>
+    </tr>
+    <tr class='outer'>
+        <td colspan=4>
+            <table>
+                <tr class=outer>
+                    <td colspan='2'>Dataset: <input type='text' id='dataset' class='long' value='<none>'></td>
+                    <td colspan='2'>Object: <input type='text' id='object' class='long' value='<none>'></td>
+                </tr>
+                <tr class=outer>
+                    <td>
+                        <div> Type: 
+                            <select id='targType'>
+                                <option value='target' selected='selected'>target</option>
+                                <option value='calstar'>calstar</option>
+                            </select>
+                        </div>
+                    </td>
+                    <td>
+                        <div> Coords: 
+                            <select id='coordSys'>
+                                <option value='instr' selected='selected'>instr</option>
+                                <option value='sky'>sky</option>
+                            </select>
+                        </div>
+                    </td>
+                    <td>
+                        <div> Move Units: 
+                            <select id='units'>
+                                <option value='arcsec' selected='selected'>arcsec</option>
+                                <option value='lenslet'>lenslet</option>
+                            </select>
+                        </div>
+                    </td>
+                    <td>
+                        <div> PA: 
+                            <input type='text' id='pa' class='short' value='0.0'>
+                        </div>
+                    </td>
+                </tr>
+                <tr class=outer>
+                    <td>
+                        <div> AO Type: 
+                            <select id='aoType' onchange='enableLGS()'>
+                                <option value='NGS' selected='selected'>NGS</option>
+                                <option value='LGS'>LGS</option>
+                            </select>
+                        </div>
+                    </td>
+                    <td colspan='2'>LGS Mode: 
+                        <select id='lgsMode' disabled>
+                            <option value='No Laser' selected='selected'>No Laser</option>
+                            <option value='Laser Fixed'>Laser Fixed</option>
+                            <option value='Dither Laser'>Dither Laser</option>
+                        </select>
+                    </td>
+                    <td>
+                        <input type='button' id='queue' value='Send To Queue' action=''>
+                    </td>
+                </tr>
+            </table>
+        </td>
+    </tr>
+    <tr class='outer'>
+        <td colspan='2'>
+            <i>Spectrometer Settings</i>
+            <table class='inner'>
+                <tr class='inner'>
+                    <td class='align-right'>Filter:</td>
+                    <td colspan=2>
+                        <select id='specFilter' value='Zbb' onchange='checkFilter();'>
+                            <option value='Zbb' selected='selected'>Zbb</option>
+                            <option value='Jbb'>Jbb</option>
+                            <option value='Hbb'>Hbb</option>
+                            <option value='Kbb'>Kbb</option>
+                            <option value='Kcb'>Kcb</option>
+                            <option value='Zn4'>Zn4</option>
+                            <option value='Jn1'>Jn1</option>
+                            <option value='Jn2'>Jn2</option>
+                            <option value='Jn3'>Jn3</option>
+                            <option value='Jn4'>Jn4</option>
+                            <option value='Hn1'>Hn1</option>
+                            <option value='Hn2'>Hn2</option>
+                            <option value='Hn3'>Hn3</option>
+                            <option value='Hn4'>Hn4</option>
+                            <option value='Hn5'>Hn5</option>
+                            <option value='Kn1'>Kn1</option>
+                            <option value='Kn2'>Kn2</option>
+                            <option value='Kn3'>Kn3</option>
+                            <option value='Kc3'>Kc3</option>
+                            <option value='Kn4'>Kn4</option>
+                            <option value='Kc4'>Kc4</option>
+                            <option value='Kn5'>Kn5</option>
+                            <option value='Kc5'>Kc5</option>
+                        </select>
+                    </td>
+                </tr>
+                <tr class='inner'>
+                    <td class='align-right'>Scale:</td>
+                    <td colspan=2>
+                        <select id='scale'>
+                            <option value='0.02' selected='selected'>0.02" / lenslet</option>
+                            <option value='0.035'>0.035" / lenslet</option>
+                            <option value='0.05'>0.05" / lenslet</option>
+                            <option value='0.10'>0.10" / lenslet</option>
+                        </select>
+                    </td>
+                </tr>
+                <tr class='inner'>
+                    <td class='align-right'>Coadds:</td>
+                    <td colspan=2><input type='text' id='specCoadds' class='short' value='1'></td>
+                </tr>
+                <tr class='inner'>
+                    <td class='align-right'>Itime:</td>
+                    <td colspan=2><input type='text' id='specItime' class='short' value='2'> s (per coadd)</td>
+                </tr>
+            </table>
+        </td>
+        <td colspan='2'>
+            <i>Object Frames</i>
+            <table class='inner'>
+                <tr class='inner'>
+                    <td colspan=2>Initial Offset</td>
+                    <td>X: <input type='text' id='initOffX' class='short' value='0.0'></td>
+                    <td>Y: <input type='text' id='initOffY' class='short' value='0.0'></td>
+                </tr>
+                <tr class='inner'>
+                    <td colspan=2>Pattern:</td>
+                    <td colspan=2>
+                        <select id='objPattern' value='Stare' onchange='objMode();'>
+                            <option value='None'>None</option>
+                            <option value='Stare' selected='selected'>Stare</option>
+                            <option value='Box4'>Box4</option>
+                            <option value='Box5'>Box5</option>
+                            <option value='Box9'>Box9</option>
+                            <option value='Statistical Dither'>Statistical Dither</option>
+                            <option value='Raster Scan'>Raster Scan</option>
+                            <option value='User Defined'>User Defined</option>
+                        </select>
+                    </td>
+                </tr>
+                <tr class='inner'>
+                    <td>Frames:</td>
+                    <td id='objFramesCell' colspan=3>
+                        <input type='text' id='objFrames1' class='short' value='1' disabled>
+                    </td>
+                    <td id='objRaster'>
+                        x <input type='text' id='objFrames2' class='short' value='1'>
+                    </td>
+                </tr>
+                <tr class='inner'>
+                    <td id='objOffLenStepX'>Unused: </td>
+                    <td><input type='text' id='objLenX' class='short' value='0.0' disabled></td>
+                    <td id='objOffHgtStepY' class='align-right'>Unused: </td>
+                    <td><input type='text' id='objHgtY' class='short' value='0.0' disabled></td>
+                </tr>
+            </table>
+        </td>
+    </tr>
+    <tr class=outer>
+        <td colspan=2>
+            <i>Imager Settings</i>
+            <table class='inner'>
+                <tr class='inner'>
+                    <td colspan=3>
+                        <select id='imgMode' value='Disabled' onchange='setMode();'>
+                            <option value='Disabled' selected='selected'>Disabled (Spec Only)</option>
+                            <option value='Independent'>Independent (Imager Only)</option>
+                            <option value='Slave1'>Slave1: Maximum Repeats</option>
+                            <option value='Slave2'>Slave2: Maximum Itime</option>
+                            <option value='Slave4'>Slave4: Filter Sets</option>
+                        </select>
+                    </td>
+                </tr>
+                <tr class='inner'>
+                    <td class='align-right'>Filter: </td>
+                    <td colspan=2>
+                        <select id='imgFilter'>
+                            <option value='Opn'>Opn</option>
+                        </select>
+                    </td>
+                </tr>
+                <tr class='inner'>
+                    <td class='align-right'>Repeats: </td>
+                    <td colspan=2><input type='text' id='repeats' class='medium' value=1 disabled></td>
+                </tr>
+                <tr class='inner'>
+                    <td class='align-right'>Coadds: </td>
+                    <td colspan=2><input type='text' id='imgCoadds' class='medium' value=1 disabled></td>
+                </tr>
+                <tr class='inner'>
+                    <td class='align-right'>Itime: </td>
+                    <td><input type='text' id='imgItime' class='short' value=2 disabled></td>
+                    <td> s (per repeat)</td>
+                </tr>
+            </table>
+        </td>
+        <td colspan=2>
+            <i>Sky Frames</i>
+            <table class='inner'>
+                <tr class='inner'>
+                    <td colspan=2>Nod Offset  </td>
+                    <td>X: <input type='text' id='nodOffX' class='short' value='0.0' disabled></td>
+                    <td>Y: <input type='text' id='nodOffY' class='short' value='0.0' disabled></td>
+                </tr>
+                <tr class='inner'>
+                    <td>Pattern:</td>
+                    <td colspan=3>
+                        <select id='skyPattern' value='None' onchange='skyMode();'>
+                            <option value='None' selected='selected'>None</option>
+                            <option value='Stare'>Stare</option>
+                            <option value='Box4'>Box4</option>
+                            <option value='Box5'>Box5</option>
+                            <option value='Box9'>Box9</option>
+                            <option value='Statistical Dither'>Statistical Dither</option>
+                            <option value='Raster Scan'>Raster Scan</option>
+                            <option value='User Defined'>User Defined</option>
+                        </select>
+                    </td>
+                </tr>
+                <tr class='inner'>
+                    <td>Frames:</td>
+                    <td id='skyFramesCell' colspan=3>
+                        <input type='text' id='skyFrames1' class='short' value='1' disabled>
+                    </td>
+                    <td id='skyRaster'>
+                        x <input type='text' id='skyFrames2' class='short' value='1'>
+                    </td>
+                </tr>
+                <tr class='inner'>
+                    <td id='skyOffLenStepX'>None: </td>
+                    <td><input type='text' id='skyLenX' class='short' value='0.0' disabled></td>
+                    <td id='skyOffHgtStepY'>None: </td>
+                    <td><input type='text' id='skyHgtY' class='short' value='0.0' disabled></td>
+                </tr>
+                <tr class='inner'>
+                    <td colspan=4>
+                        <button id='showPosBtn'>Show Position List</button>
+                    </td>
+                </tr>
+            </table>
+        </td>
+    </tr>
+    <tr>
+        <td colspan=4>
+            <input type=button value='Update' id='updateBt'>
+        </td>
+    </tr>
+</table>
+</body>
+</html>
