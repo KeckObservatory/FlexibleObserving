@@ -14,6 +14,7 @@ function Oopgui(){
         'Zn3','Brγ','Kcnt','HeIB','Paγ','FeII','Hcnt','Drk'];
     self.masks = ['Open Circ','Pupil View','Large Ann','Small Ann','Large Hex','Small Hex'];
     self.maskAnno = {'Open Circ':'O','Pupil View':'P','Large Ann':'A','Small Ann':'a','Large Hex':'H','Small Hex':'h'};
+    self.fullMask = {'O':'Open Circ','P':'Pupil View','A':'Large Ann','a':'Small Ann','H':'Large Hex','h':'Small Hex'};
     self.filterSets = [];
     self.timeLeft = 0;
 
@@ -258,8 +259,9 @@ function Oopgui(){
                     else userdefs.push(false);
                 }
             }
-            console.log(userdefs);
+            //console.log(userdefs);
             //El('userdefs').value = userdefs;
+            self.buildTable();
             self.defs = userdefs;
             self.update();
         };
@@ -375,11 +377,20 @@ function Oopgui(){
         El('objFrames2').value = parseFloat(self.configToLoad.objFrames2);
         El('objLenX').value = parseFloat(self.configToLoad.objLenX);
         El('objHgtY').value = parseFloat(self.configToLoad.objHgtY);
-        El('imgFilter').value = self.configToLoad.imgFilter;
-        El('mask').value = self.configToLoad.mask;
-        El('repeats').value = parseFloat(self.configToLoad.repeats);
-        El('imgCoadds').value = parseFloat(self.configToLoad.imgCoadds);
-        El('imgItime').value = parseFloat(self.configToLoad.imgItime);
+        if (self.configToLoad.imgMode == 'Slave4'){
+            El('imgFilterSets').value = self.configToLoad.imgFilter;
+            El('repeatSets').value = self.configToLoad.repeats;
+            El('coaddSets').value = self.configToLoad.imgCoadds;
+            El('itimeSets').value = self.configToLoad.imgItime;
+            self.buildTable();
+        }
+        else{
+            El('imgFilter').value = self.configToLoad.imgFilter;
+            El('mask').value = self.configToLoad.mask;
+            El('repeats').value = parseFloat(self.configToLoad.repeats);
+            El('imgCoadds').value = parseFloat(self.configToLoad.imgCoadds);
+            El('imgItime').value = parseFloat(self.configToLoad.imgItime);
+        }
         El('nodOffX').value = parseFloat(self.configToLoad.nodOffX);
         El('nodOffY').value = parseFloat(self.configToLoad.nodOffY);
         El('skyPattern').value = self.configToLoad.skyPattern;
@@ -866,7 +877,6 @@ function Oopgui(){
         var setDefs = El('setDefs');
         El('timeLeft').value = self.calculateImagerTime() - self.calculateUsedTime();
 
-        //var count = self.createFilterSets();
         self.updateFilterSets();
         if (isBeingShown && filterSets.style.display != 'block') filterSets.style.display = 'block';
         else filterSets.style.display = 'none';
@@ -996,7 +1006,7 @@ function Oopgui(){
         }
     };
 
-    self.addRow = function(rowCount) {
+    self.addRow = function() {
         const MIN_TIME = 5.0;
         var filterTable = El('setDefs');
         var newRow = document.createElement('tr');
@@ -1071,6 +1081,61 @@ function Oopgui(){
         El('timeLeft').value = self.calculateImagerTime();
     };
 
+    self.buildTable = function() {
+        var filterTable = El('setDefs');
+        var filterSets = El('imgFilterSets').value.split(',');
+        var repeatSets = El('repeatSets').value.split(',');
+        var coaddSets = El('coaddSets').value.split(',');
+        var itimeSets = El('itimeSets').value.split(',');
+
+        for (var i in filterSets){
+            var newRow = document.createElement('tr');
+            var filterSet = filterSets[i].split('-');
+            var newCell = newRow.insertCell(0);
+            var newElement = self.createDropdown(self.filters);
+            newElement.value = filterSet[0];
+            newElement.onchange = function(){setMask(this, 'multi')};
+            newCell.appendChild(newElement);
+
+            newCell = newRow.insertCell(1);
+            newElement = self.createDropdown(self.masks);
+            newElement.value = self.fullMask[filterSet[1]];
+            newElement.onchange = function(){setMask(this, 'multi')};
+            newCell.appendChild(newElement);
+
+            // Add a text input for Repeats, default 1
+            newCell = newRow.insertCell(2);
+            newElement = document.createElement('input');
+            newElement.value = repeatSets[i];
+            newElement.onchange = function(){checkRepeatTime()};
+            newCell.appendChild(newElement);
+
+            // Add a text input for Coadds, default 1
+            newCell = newRow.insertCell(3);
+            newElement = document.createElement('input');
+            newElement.value = coaddSets[i];
+            newElement.onchange = function(){checkCoaddTime()};
+            newCell.appendChild(newElement);
+
+            // Add a text input for Itime, default 2.0
+            newCell = newRow.insertCell(4);
+            newElement = document.createElement('input');
+            newElement.value = itimeSets[i];
+            newElement.onchange = function(){checkItimeTime()};
+            newCell.appendChild(newElement);
+
+            // Add a button to remove the row
+            newCell = newRow.insertCell(5);
+            newElement = document.createElement('button');
+            newElement.innerHTML = 'Remove Row';
+            newElement.onclick = function(src){removeRow(this)};
+            newCell.appendChild(newElement);
+
+            // Add the new row to the table
+            filterTable.appendChild(newRow);
+        }
+    };
+
     self.createDropdown = function(elements) {
         var newSelect = document.createElement('select');
         for (var option of elements){
@@ -1085,8 +1150,6 @@ function Oopgui(){
     self.clickPosBtn = function() {
         self.showPosList(true);
     };
-
-    self.updateFiltersets = function () {};
 
     self.showPosList = function (isBeingShown) {
         var userdefs = El('userdefs');
@@ -1363,9 +1426,9 @@ function Oopgui(){
         El('imgFilter').value = "Opn";
         El('mask').value = 'Open Circ';
         El('imgFilterSets').value = '';
-        El('repeats').value = 1.0;
+        El('repeats').value = 1;
         El('repeatSets').value = '';
-        El('imgCoadds').value = 1.0;
+        El('imgCoadds').value = 1;
         El('coaddSets').value = '';
         El('imgItime').value = 2.0;
         El('itimeSets').value = '';
@@ -1378,6 +1441,7 @@ function Oopgui(){
         El('skyHgtY').value = 0.0;
         self.defs = {};
 
+        self.clearAllRows();
         self.enableLGS();
         self.setMode();
         self.objMode();
